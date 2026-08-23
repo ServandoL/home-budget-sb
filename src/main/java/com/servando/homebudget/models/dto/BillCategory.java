@@ -1,4 +1,4 @@
-package com.servando.homebudget.dto;
+package com.servando.homebudget.models.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
