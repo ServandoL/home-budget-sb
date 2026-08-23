@@ -4,9 +4,8 @@ import com.servando.homebudget.models.database.BillsModel;
 import com.servando.homebudget.models.dto.CreateBillsRequestDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateBillsRequestDto;
-import com.servando.homebudget.services.BillsService;
+import com.servando.homebudget.services.BillsServiceImpl;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +18,11 @@ import java.util.List;
 public class BillsController {
 
     @Autowired
-    private BillsService billsService;
+    private BillsServiceImpl billsService;
 
     @GetMapping
     ResponseEntity<GenericResponseDto<List<BillsModel>>> getBills() {
-        var results = billsService.getBills();
+        var results = billsService.getAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
@@ -41,7 +40,7 @@ public class BillsController {
 
     @DeleteMapping("/{id}")
     ResponseEntity<GenericResponseDto<String>> deleteBill(@PathVariable @Valid String id) {
-        var result = billsService.deleteBill(id);
+        var result = billsService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

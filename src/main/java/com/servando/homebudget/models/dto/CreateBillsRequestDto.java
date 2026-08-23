@@ -1,16 +1,17 @@
 package com.servando.homebudget.models.dto;
 
 import com.servando.homebudget.models.database.BillCategory;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
-public record CreateBillsRequestDto(
+@Getter
+public class CreateBillsRequestDto extends SharedRequestProperties {
         @NotNull
-        @NotBlank
-        String name,
+        Double amount;
+        @Nullable
+        Integer dueDay;
         @NotNull
-        Double amount,
-        int dueDay,
-        @NotNull
-        BillCategory category) {
+        BillCategory category;
 }

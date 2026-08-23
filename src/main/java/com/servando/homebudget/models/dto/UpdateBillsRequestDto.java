@@ -1,6 +1,16 @@
 package com.servando.homebudget.models.dto;
 
 import com.servando.homebudget.models.database.BillCategory;
+import jakarta.annotation.Nullable;
+import lombok.Getter;
+import lombok.Setter;
 
-public record UpdateBillsRequestDto(String name, Double amount, int dueDay, BillCategory category) {
+@Getter
+public class UpdateBillsRequestDto extends SharedRequestProperties {
+    @Nullable
+    Double amount;
+    @Nullable
+    Integer dueDay;
+    @Nullable
+    BillCategory category;
 }
