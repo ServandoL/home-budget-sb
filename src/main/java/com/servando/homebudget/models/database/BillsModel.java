@@ -1,22 +1,26 @@
-package com.servando.homebudget.models.dto;
+package com.servando.homebudget.models.database;
 
 import jakarta.annotation.Nonnull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
+
 @Document("Bills")
-public record BillDto(
+public record BillsModel(
         @Id
         @Nonnull
         String id,
-        @Indexed
+        @Indexed(unique = true)
         @Nonnull
         String name,
         @Nonnull
         Double amount,
         int dueDay,
         @Nonnull
-        BillCategory category
+        BillCategory category,
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }

@@ -1,12 +1,12 @@
 package com.servando.homebudget.repository;
 
-import com.servando.homebudget.models.dto.IncomeDto;
+import com.servando.homebudget.models.database.IncomesModel;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface IncomesRepository extends MongoRepository<IncomeDto, String> {
-    Optional<IncomeDto> findByName(String name);
+public interface IncomesRepository extends MongoRepository<IncomesModel, String> {
+    Optional<IncomesModel> findByName(String name);
 }
