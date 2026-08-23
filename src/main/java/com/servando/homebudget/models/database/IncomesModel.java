@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -11,13 +12,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 
 @Document("Incomes")
-public class IncomesModel {
+@Getter
+public class IncomesModel extends SharedProperties {
     @NotNull
     Double netAmount;
     @NotNull
     PayFrequency frequency;
 
-    public IncomesModel(PayFrequency frequency, Double netAmount) {
+    public IncomesModel(String name, PayFrequency frequency, Double netAmount) {
+        super(name, Instant.now());
         this.frequency = frequency;
         this.netAmount = netAmount;
     }

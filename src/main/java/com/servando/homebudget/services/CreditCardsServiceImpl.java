@@ -1,19 +1,15 @@
 package com.servando.homebudget.services;
 
-import com.servando.homebudget.exceptions.RecordNotFoundException;
 import com.servando.homebudget.models.database.CreditCardsModel;
 import com.servando.homebudget.models.dto.CreateCreditCardsRequestDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateCreditCardsRequestDto;
 import com.servando.homebudget.repository.CreditCardsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
-public class CreditCardsService extends BaseCrudServiceImpl<CreditCardsModel, CreditCardsRepository, CreateCreditCardsRequestDto, UpdateCreditCardsRequestDto> {
-    CreditCardsService(CreditCardsRepository repository) {
+public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel, CreditCardsRepository, CreateCreditCardsRequestDto, UpdateCreditCardsRequestDto> {
+    CreditCardsServiceImpl(CreditCardsRepository repository) {
         super(repository);
     }
 

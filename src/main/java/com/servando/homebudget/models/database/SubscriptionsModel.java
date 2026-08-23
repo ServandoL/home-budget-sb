@@ -19,8 +19,8 @@ public class SubscriptionsModel extends SharedProperties {
     @Nullable
     Integer billingDay;
 
-    public SubscriptionsModel(@org.jspecify.annotations.Nullable Instant createdAt, String name, @org.jspecify.annotations.Nullable Instant updatedAt, Double amount, @Nullable BillingCycle billingCycle, @Nullable Integer billingDay) {
-        super(createdAt, name, updatedAt);
+    public SubscriptionsModel(String name, Double amount, @Nullable BillingCycle billingCycle, @Nullable Integer billingDay) {
+        super(name, Instant.now());
         this.amount = amount;
         this.billingCycle = billingCycle;
         this.billingDay = billingDay;
