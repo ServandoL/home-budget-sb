@@ -1,3 +1,24 @@
+server:
+  port: 9010
+
 spring:
   application:
     name: home-budget
+  data:
+    mongodb:
+      uri: ${MONGO_APP_URL}
+      database: ${MONGO_DATABASE}
+
+
+management:
+  endpoint:
+    health:
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+
