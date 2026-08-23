@@ -15,31 +15,31 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/bills")
-public class BillsController {
+public class BillsControllerImpl implements CrudController<BillsModel, CreateBillsRequestDto, UpdateBillsRequestDto> {
 
     @Autowired
     private BillsServiceImpl billsService;
 
     @GetMapping
-    ResponseEntity<GenericResponseDto<List<BillsModel>>> getBills() {
+    public ResponseEntity<GenericResponseDto<List<BillsModel>>> getAll() {
         var results = billsService.getAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
     @PostMapping
-    ResponseEntity<GenericResponseDto<String>> createBill(@RequestBody @Valid CreateBillsRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateBillsRequestDto toCreate) {
         var response = billsService.createBill(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<GenericResponseDto<String>> updateBill(@PathVariable @Valid String id, @RequestBody @Valid UpdateBillsRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateBillsRequestDto toUpdate) {
         var response = billsService.updateBill(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity<GenericResponseDto<String>> deleteBill(@PathVariable @Valid String id) {
+    public ResponseEntity<GenericResponseDto<String>> delete(@PathVariable @Valid String id) {
         var result = billsService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }

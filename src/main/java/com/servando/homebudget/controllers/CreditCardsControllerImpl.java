@@ -13,31 +13,31 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/credit-cards")
-public class CreditCardsController {
+public class CreditCardsControllerImpl implements CrudController<CreditCardsModel, CreateCreditCardsRequestDto, UpdateCreditCardsRequestDto> {
 
     @Autowired
     private CreditCardsServiceImpl creditCardsService;
 
     @GetMapping
-    ResponseEntity<GenericResponseDto<List<CreditCardsModel>>> getBills() {
+    public ResponseEntity<GenericResponseDto<List<CreditCardsModel>>> getAll() {
         var results = creditCardsService.getAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
     @PostMapping
-    ResponseEntity<GenericResponseDto<String>> createBill(@RequestBody @Valid CreateCreditCardsRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateCreditCardsRequestDto toCreate) {
         var response = creditCardsService.createCreditCard(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    ResponseEntity<GenericResponseDto<String>> updateBill(@PathVariable @Valid String id, @RequestBody @Valid UpdateCreditCardsRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateCreditCardsRequestDto toUpdate) {
         var response = creditCardsService.updateCreditCard(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
-    ResponseEntity<GenericResponseDto<String>> deleteBill(@PathVariable @Valid String id) {
+    public ResponseEntity<GenericResponseDto<String>> delete(@PathVariable @Valid String id) {
         var result = creditCardsService.delete(id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }

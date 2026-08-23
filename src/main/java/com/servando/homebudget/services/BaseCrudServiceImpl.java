@@ -6,6 +6,7 @@ import com.servando.homebudget.models.database.SharedProperties;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.SharedRequestProperties;
 import com.servando.homebudget.repository.BaseCrudRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
