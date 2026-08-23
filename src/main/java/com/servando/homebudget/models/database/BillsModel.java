@@ -24,8 +24,8 @@ public class BillsModel extends SharedProperties {
     @NotNull
     BillCategory category;
 
-    public BillsModel(String name, Double amount, BillCategory category, @Nullable Integer dueDay) {
-        super(name, Instant.now());
+    public BillsModel(String name, Double amount, BillCategory category, BillingCycle billingCycle, @Nullable Integer dueDay) {
+        super(name, billingCycle, Instant.now());
         this.amount = amount;
         this.category = category;
         this.dueDay = dueDay;

@@ -19,8 +19,8 @@ public class IncomesModel extends SharedProperties {
     @NotNull
     PayFrequency frequency;
 
-    public IncomesModel(String name, PayFrequency frequency, Double netAmount) {
-        super(name, Instant.now());
+    public IncomesModel(String name, BillingCycle billingCycle, PayFrequency frequency, Double netAmount) {
+        super(name, billingCycle, Instant.now());
         this.frequency = frequency;
         this.netAmount = netAmount;
     }

@@ -17,12 +17,10 @@ public class SubscriptionsModel extends SharedProperties {
     @NotNull
     Double amount;
     @Nullable
-    BillingCycle billingCycle;
-    @Nullable
     Integer billingDay;
 
-    public SubscriptionsModel(String name, Double amount, @Nullable BillingCycle billingCycle, @Nullable Integer billingDay) {
-        super(name, Instant.now());
+    public SubscriptionsModel(String name, BillingCycle billingCycle, Double amount, @Nullable Integer billingDay) {
+        super(name, billingCycle, Instant.now());
         this.amount = amount;
         this.billingCycle = billingCycle;
         this.billingDay = billingDay;

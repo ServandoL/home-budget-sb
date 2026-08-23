@@ -20,13 +20,16 @@ public class SharedProperties {
     @NotNull
     @Indexed(unique = true)
     String name;
+    @NotNull
+    BillingCycle billingCycle;
     @Nullable
     Instant createdAt;
     @Nullable
     Instant updatedAt;
 
-    public SharedProperties(String name, Instant updatedAt) {
+    public SharedProperties(String name, BillingCycle billingCycle, Instant updatedAt) {
         var now = Instant.now();
+        this.billingCycle = billingCycle;
         this.createdAt = now;
         this.name = name;
         this.updatedAt = updatedAt == null ? now : updatedAt;

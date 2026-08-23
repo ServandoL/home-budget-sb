@@ -24,8 +24,8 @@ public class CreditCardsModel extends SharedProperties {
     @Nullable
     Integer dueDay;
 
-    public CreditCardsModel(String name, @Nullable Double apr, @Nullable Double currentBalance, @Nullable Integer dueDay, @Nullable Double minimumPayment) {
-        super(name, Instant.now());
+    public CreditCardsModel(String name, BillingCycle billingCycle, @Nullable Double apr, @Nullable Double currentBalance, @Nullable Integer dueDay, @Nullable Double minimumPayment) {
+        super(name, billingCycle, Instant.now());
         this.apr = apr;
         this.currentBalance = currentBalance;
         this.dueDay = dueDay;

@@ -16,8 +16,8 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
     public GenericResponseDto<String> createIncome(CreateSubscriptionsRequestDto request) {
         var toCreate = new SubscriptionsModel(
                 request.getName(),
-                request.getAmount(),
                 request.getBillingCycle(),
+                request.getAmount(),
                 request.getBillingDay()
         );
         return this.create(request, toCreate);
@@ -27,8 +27,8 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
         var other = findOtherById(id);
         var toUpdate = new SubscriptionsModel(
                 request.getName() == null ? other.getName() : request.getName(),
-                request.getAmount() == null ? other.getAmount() : request.getAmount(),
                 request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
+                request.getAmount() == null ? other.getAmount() : request.getAmount(),
                 request.getBillingDay() == null ? other.getBillingDay() : request.getBillingDay()
         );
         return this.update(id, request, toUpdate);

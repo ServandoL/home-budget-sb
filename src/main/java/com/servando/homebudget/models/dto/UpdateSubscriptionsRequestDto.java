@@ -11,7 +11,5 @@ public class UpdateSubscriptionsRequestDto extends SharedRequestProperties {
     @Nullable
     Double amount;
     @Nullable
-    BillingCycle billingCycle;
-    @Nullable
     Integer billingDay;
 }

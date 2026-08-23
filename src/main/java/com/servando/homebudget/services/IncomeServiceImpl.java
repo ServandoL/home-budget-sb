@@ -16,6 +16,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
     public GenericResponseDto<String> createIncome(CreateIncomeRequestDto request) {
         var toCreate = new IncomesModel(
                 request.getName(),
+                request.getBillingCycle(),
                 request.getFrequency(),
                 request.getNetAmount()
         );
@@ -26,6 +27,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         var other = findOtherById(id);
         var toUpdate = new IncomesModel(
                 request.getName() == null ? other.getName() : request.getName(),
+                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
                 request.getFrequency() == null ? other.getFrequency() : request.getFrequency(),
                 request.getNetAmount() == null ? other.getNetAmount() : request.getNetAmount()
                 );

@@ -16,6 +16,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
     public GenericResponseDto<String> createCreditCard(CreateCreditCardsRequestDto request) {
         var toCreate = new CreditCardsModel(
                 request.getName(),
+                request.getBillingCycle(),
                 request.getApr(),
                 request.getCurrentBalance(),
                 request.getDueDay(),
@@ -28,6 +29,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         var other = this.findOtherById(id);
         var toUpdate = new CreditCardsModel(
                 request.getName() == null ? other.getName() : request.getName(),
+                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
                 request.getApr() == null ? other.getApr() : request.getApr(),
                 request.getCurrentBalance() == null ? other.getCurrentBalance() : request.getCurrentBalance(),
                 request.getDueDay() == null ? other.getDueDay() : request.getDueDay(),

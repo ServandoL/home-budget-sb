@@ -19,6 +19,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
                 request.getName(),
                 request.getAmount(),
                 request.getCategory(),
+                request.getBillingCycle(),
                 request.getDueDay()
         );
         return this.create(request, toCreate);
@@ -30,6 +31,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
                 request.getName() == null ? other.getName() : request.getName(),
                 request.getAmount() == null ? other.getAmount() : request.getAmount(),
                 request.getCategory() == null ? other.getCategory() : request.getCategory(),
+                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
                 request.getDueDay() == null ? other.getDueDay() : request.getDueDay()
                 );
         return this.update(id, request, toUpdate);
