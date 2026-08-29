@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum BillingCycle {
     MONTHLY("monthly"),
     ANNUAL("annual"),
-    SEMIANNUAL("semiannual");
+    SEMIANNUAL("semiannual"),
+    OPTIONAL("optional");
+
     private final String value;
 
     BillingCycle(String value) {

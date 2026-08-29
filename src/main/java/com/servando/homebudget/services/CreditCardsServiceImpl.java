@@ -5,6 +5,7 @@ import com.servando.homebudget.models.dto.CreateCreditCardsRequestDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateCreditCardsRequestDto;
 import com.servando.homebudget.repository.CreditCardsRepository;
+import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,12 +29,12 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
     public GenericResponseDto<String> updateCreditCard(String id, UpdateCreditCardsRequestDto request) {
         var other = this.findOtherById(id);
         var toUpdate = new CreditCardsModel(
-                request.getName() == null ? other.getName() : request.getName(),
-                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
-                request.getApr() == null ? other.getApr() : request.getApr(),
-                request.getCurrentBalance() == null ? other.getCurrentBalance() : request.getCurrentBalance(),
-                request.getDueDay() == null ? other.getDueDay() : request.getDueDay(),
-                request.getMinimumPayment() == null ? other.getMinimumPayment() : request.getMinimumPayment()
+                ResolveValueFactory.of(request.getName(), other.getName()),
+                ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
+                ResolveValueFactory.of(request.getApr(), other.getApr()),
+                ResolveValueFactory.of(request.getCurrentBalance(), other.getCurrentBalance()),
+                ResolveValueFactory.of(request.getDueDay(), other.getDueDay()),
+                ResolveValueFactory.of(request.getMinimumPayment(), other.getMinimumPayment())
         );
         return this.update(id, request, toUpdate);
     }

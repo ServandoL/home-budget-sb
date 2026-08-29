@@ -5,6 +5,7 @@ import com.servando.homebudget.models.database.SubscriptionsModel;
 import com.servando.homebudget.models.dto.*;
 import com.servando.homebudget.repository.IncomesRepository;
 import com.servando.homebudget.repository.SubscriptionsRepository;
+import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,10 +27,10 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
     public GenericResponseDto<String> updateIncome(String id, UpdateSubscriptionsRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new SubscriptionsModel(
-                request.getName() == null ? other.getName() : request.getName(),
-                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
-                request.getAmount() == null ? other.getAmount() : request.getAmount(),
-                request.getBillingDay() == null ? other.getBillingDay() : request.getBillingDay()
+                ResolveValueFactory.of(request.getName(), other.getName()),
+                ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
+                ResolveValueFactory.of(request.getAmount(), other.getAmount()),
+                ResolveValueFactory.of(request.getBillingDay(), other.getBillingDay())
         );
         return this.update(id, request, toUpdate);
     }

@@ -6,6 +6,7 @@ import com.servando.homebudget.models.dto.CreateBillsRequestDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateBillsRequestDto;
 import com.servando.homebudget.repository.BillsRepository;
+import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -28,12 +29,12 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
     public GenericResponseDto<String> updateBill(String id, UpdateBillsRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new BillsModel(
-                request.getName() == null ? other.getName() : request.getName(),
-                request.getAmount() == null ? other.getAmount() : request.getAmount(),
-                request.getCategory() == null ? other.getCategory() : request.getCategory(),
-                request.getBillingCycle() == null ? other.getBillingCycle() : request.getBillingCycle(),
-                request.getDueDay() == null ? other.getDueDay() : request.getDueDay()
-                );
+                ResolveValueFactory.of(request.getName(), other.getName()),
+                ResolveValueFactory.of(request.getAmount(), other.getAmount()),
+                ResolveValueFactory.of(request.getCategory(), other.getCategory()),
+                ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
+                ResolveValueFactory.of(request.getDueDay(), other.getDueDay())
+        );
         return this.update(id, request, toUpdate);
     }
 }
