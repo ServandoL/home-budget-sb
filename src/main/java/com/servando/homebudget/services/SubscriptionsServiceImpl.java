@@ -24,7 +24,7 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
         return this.create(request, toCreate);
     }
 
-    public GenericResponseDto<String> updateIncome(String id, UpdateSubscriptionsRequestDto request) {
+    public GenericResponseDto<SubscriptionsModel> updateIncome(String id, UpdateSubscriptionsRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new SubscriptionsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),

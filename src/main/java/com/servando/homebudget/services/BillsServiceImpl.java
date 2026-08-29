@@ -26,7 +26,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
         return this.create(request, toCreate);
     }
 
-    public GenericResponseDto<String> updateBill(String id, UpdateBillsRequestDto request) {
+    public GenericResponseDto<BillsModel> updateBill(String id, UpdateBillsRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new BillsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),

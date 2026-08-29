@@ -31,7 +31,7 @@ public class SubscriptionsControllerImpl implements CrudController<Subscriptions
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateSubscriptionsRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<SubscriptionsModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateSubscriptionsRequestDto toUpdate) {
         var response = subscriptionsService.updateIncome(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

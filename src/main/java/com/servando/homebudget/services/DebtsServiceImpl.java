@@ -25,7 +25,7 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         return this.create(request, toCreate);
     }
 
-    public GenericResponseDto<String> updateDebt(String id, UpdateDebtDto request) {
+    public GenericResponseDto<DebtsModel> updateDebt(String id, UpdateDebtDto request) {
         var other = findOtherById(id);
         var toUpdate = new DebtsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),

@@ -2,6 +2,7 @@ package com.servando.homebudget.utils;
 
 import com.servando.homebudget.models.database.BillCategory;
 import com.servando.homebudget.models.database.BillingCycle;
+import com.servando.homebudget.models.database.HouseRepairsStatus;
 import com.servando.homebudget.models.database.PayFrequency;
 
 import java.time.Instant;
@@ -19,6 +20,9 @@ public class ResolveValueFactory<TValue> {
         return this.request == null ? other : request;
     }
 
+    public static HouseRepairsStatus of(HouseRepairsStatus request, HouseRepairsStatus other) {
+        return new ResolveValueFactory<>(request, other).resolveValue();
+    }
     public static PayFrequency of(PayFrequency request, PayFrequency other) {
         return new ResolveValueFactory<>(request, other).resolveValue();
     }

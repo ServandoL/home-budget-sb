@@ -37,7 +37,7 @@ public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepo
     }
 
     @Override
-    public GenericResponseDto<String> update(String id, TUpdateRequest tUpdateRequest, TModel toUpdate) {
+    public GenericResponseDto<TModel> update(String id, TUpdateRequest tUpdateRequest, TModel toUpdate) {
         var existing = repository.findById(id);
         if (existing.isEmpty()) {
             throw new RecordNotFoundException(id);
@@ -54,7 +54,7 @@ public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepo
         }
         toUpdate.setId(id);
         repository.save(toUpdate);
-        return new GenericResponseDto<>(true, "Record updated", toUpdate.getId());
+        return new GenericResponseDto<>(true, "Record updated", toUpdate);
     }
 
     @Override

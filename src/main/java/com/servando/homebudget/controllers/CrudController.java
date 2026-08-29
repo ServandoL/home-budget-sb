@@ -13,7 +13,7 @@ public interface CrudController<TModel, TCreateRequest, TUpdateRequest> {
 
     ResponseEntity<GenericResponseDto<TModel>> create(@RequestBody @Valid TCreateRequest toCreate);
 
-    ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid TUpdateRequest toUpdate);
+    ResponseEntity<GenericResponseDto<TModel>> update(@PathVariable @Valid String id, @RequestBody @Valid TUpdateRequest toUpdate);
 
     ResponseEntity<GenericResponseDto<String>> delete(@PathVariable @Valid String id);
 

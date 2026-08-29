@@ -31,7 +31,7 @@ public class CreditCardsControllerImpl implements CrudController<CreditCardsMode
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateCreditCardsRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<CreditCardsModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateCreditCardsRequestDto toUpdate) {
         var response = creditCardsService.updateCreditCard(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

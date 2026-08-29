@@ -33,7 +33,7 @@ public class BillsControllerImpl implements CrudController<BillsModel, CreateBil
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateBillsRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<BillsModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateBillsRequestDto toUpdate) {
         var response = billsService.updateBill(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

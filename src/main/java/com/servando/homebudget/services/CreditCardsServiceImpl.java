@@ -26,7 +26,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         return this.create(request, toCreate);
     }
 
-    public GenericResponseDto<String> updateCreditCard(String id, UpdateCreditCardsRequestDto request) {
+    public GenericResponseDto<CreditCardsModel> updateCreditCard(String id, UpdateCreditCardsRequestDto request) {
         var other = this.findOtherById(id);
         var toUpdate = new CreditCardsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),

@@ -22,7 +22,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         return this.create(request, toCreate);
     }
 
-    public GenericResponseDto<String> updateIncome(String id, UpdateIncomeRequestDto request) {
+    public GenericResponseDto<IncomesModel> updateIncome(String id, UpdateIncomeRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new IncomesModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),

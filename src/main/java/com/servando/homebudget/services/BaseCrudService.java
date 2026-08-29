@@ -8,7 +8,7 @@ public interface BaseCrudService<TModel, TResults, TCreateRequest, TUpdateReques
 
     GenericResponseDto<TModel> create(TCreateRequest request, TModel toCreate);
 
-    GenericResponseDto<String> update(String id, TUpdateRequest request, TModel toUpdate);
+    GenericResponseDto<TModel> update(String id, TUpdateRequest request, TModel toUpdate);
 
     GenericResponseDto<String> delete(String id);
 }

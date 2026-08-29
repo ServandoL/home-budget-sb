@@ -36,7 +36,7 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
 
     @Override
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateDebtDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<DebtsModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateDebtDto toUpdate) {
         var response = debtsService.updateDebt(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

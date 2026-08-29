@@ -31,7 +31,7 @@ public class IncomesControllerImpl implements CrudController<IncomesModel, Creat
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateIncomeRequestDto toUpdate) {
+    public ResponseEntity<GenericResponseDto<IncomesModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateIncomeRequestDto toUpdate) {
         var response = incomeService.updateIncome(id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
