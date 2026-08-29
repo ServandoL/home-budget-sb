@@ -25,7 +25,7 @@ public class CreditCardsControllerImpl implements CrudController<CreditCardsMode
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateCreditCardsRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<CreditCardsModel>> create(@RequestBody @Valid CreateCreditCardsRequestDto toCreate) {
         var response = creditCardsService.createCreditCard(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

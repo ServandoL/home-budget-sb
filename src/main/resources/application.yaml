@@ -1,6 +1,12 @@
 server:
   port: {SERVER_PORT}
 
+logging:
+  level:
+    com:
+      servando:
+        homebudget: TRACE
+
 app:
   cors:
     allowed-origins:

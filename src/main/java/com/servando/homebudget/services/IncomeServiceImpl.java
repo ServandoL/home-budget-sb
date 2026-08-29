@@ -1,9 +1,7 @@
 package com.servando.homebudget.services;
 
-import com.servando.homebudget.models.database.BillsModel;
 import com.servando.homebudget.models.database.IncomesModel;
 import com.servando.homebudget.models.dto.*;
-import com.servando.homebudget.repository.BillsRepository;
 import com.servando.homebudget.repository.IncomesRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         super(repository);
     }
 
-    public GenericResponseDto<String> createIncome(CreateIncomeRequestDto request) {
+    public GenericResponseDto<IncomesModel> createIncome(CreateIncomeRequestDto request) {
         var toCreate = new IncomesModel(
                 request.getName(),
                 request.getBillingCycle(),
@@ -32,6 +30,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
                 ResolveValueFactory.of(request.getFrequency(), other.getFrequency()),
                 ResolveValueFactory.of(request.getNetAmount(), other.getNetAmount())
         );
+        toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(id, request, toUpdate);
     }
 }

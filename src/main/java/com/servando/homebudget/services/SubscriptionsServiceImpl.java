@@ -14,7 +14,7 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
         super(repository);
     }
 
-    public GenericResponseDto<String> createIncome(CreateSubscriptionsRequestDto request) {
+    public GenericResponseDto<SubscriptionsModel> createIncome(CreateSubscriptionsRequestDto request) {
         var toCreate = new SubscriptionsModel(
                 request.getName(),
                 request.getBillingCycle(),
@@ -32,6 +32,7 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
                 ResolveValueFactory.of(request.getAmount(), other.getAmount()),
                 ResolveValueFactory.of(request.getBillingDay(), other.getBillingDay())
         );
+        toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(id, request, toUpdate);
     }
 }

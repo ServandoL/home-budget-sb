@@ -27,7 +27,7 @@ public class BillsControllerImpl implements CrudController<BillsModel, CreateBil
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateBillsRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<BillsModel>> create(@RequestBody @Valid CreateBillsRequestDto toCreate) {
         var response = billsService.createBill(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

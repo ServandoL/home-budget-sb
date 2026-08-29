@@ -6,7 +6,7 @@ public interface BaseCrudService<TModel, TResults, TCreateRequest, TUpdateReques
 
     GenericResponseDto<TResults> getAll();
 
-    GenericResponseDto<String> create(TCreateRequest request, TModel toCreate);
+    GenericResponseDto<TModel> create(TCreateRequest request, TModel toCreate);
 
     GenericResponseDto<String> update(String id, TUpdateRequest request, TModel toUpdate);
 

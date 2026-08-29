@@ -18,9 +18,9 @@ public class CreateDebtDto extends SharedRequestProperties {
     @NotBlank
     String description;
     @NotNull
-    Instant debtStarted;
+    String debtStarted;
     @NotNull
     Double amountPaid;
     @Nullable
-    Instant datePaid;
+    String datePaid;
 }

@@ -25,7 +25,7 @@ public class SubscriptionsControllerImpl implements CrudController<Subscriptions
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateSubscriptionsRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<SubscriptionsModel>> create(@RequestBody @Valid CreateSubscriptionsRequestDto toCreate) {
         var response = subscriptionsService.createIncome(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

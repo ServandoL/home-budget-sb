@@ -13,11 +13,11 @@ public class UpdateDebtDto extends SharedRequestProperties {
     @Nullable
     String description;
     @Nullable
-    Instant debtStarted;
+    String debtStarted;
     @Nullable
     Double amountPaid;
     @Nullable
-    Instant datePaid;
+    String datePaid;
     @Nullable
     Double amount;
 }

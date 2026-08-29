@@ -2,14 +2,11 @@ package com.servando.homebudget.services;
 
 import com.servando.homebudget.exceptions.RecordAlreadyExistsException;
 import com.servando.homebudget.exceptions.RecordNotFoundException;
-import com.servando.homebudget.models.database.BillingCycle;
 import com.servando.homebudget.models.database.SharedProperties;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.SharedRequestProperties;
 import com.servando.homebudget.repository.BaseCrudRepository;
-import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 
 public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepository extends BaseCrudRepository<TModel>, TCreateRequest extends SharedRequestProperties, TUpdateRequest extends SharedRequestProperties> implements BaseCrudService<TModel, List<TModel>, TCreateRequest, TUpdateRequest> {
@@ -30,13 +27,13 @@ public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepo
     }
 
     @Override
-    public GenericResponseDto<String> create(TCreateRequest tCreateRequest, TModel toCreate) {
+    public GenericResponseDto<TModel> create(TCreateRequest tCreateRequest, TModel toCreate) {
         var result = repository.findByName(tCreateRequest.getName());
         if (result.isPresent()) {
             throw new RecordAlreadyExistsException(result.get().getName());
         }
         var created = repository.save(toCreate);
-        return new GenericResponseDto<>(true, "Record created", created.getId());
+        return new GenericResponseDto<>(true, "Record created", created);
     }
 
     @Override
@@ -55,6 +52,7 @@ public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepo
                 }
             }
         }
+        toUpdate.setId(id);
         repository.save(toUpdate);
         return new GenericResponseDto<>(true, "Record updated", toUpdate.getId());
     }

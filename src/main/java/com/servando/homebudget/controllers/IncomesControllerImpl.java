@@ -25,7 +25,7 @@ public class IncomesControllerImpl implements CrudController<IncomesModel, Creat
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponseDto<String>> create(@RequestBody @Valid CreateIncomeRequestDto toCreate) {
+    public ResponseEntity<GenericResponseDto<IncomesModel>> create(@RequestBody @Valid CreateIncomeRequestDto toCreate) {
         var response = incomeService.createIncome(toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

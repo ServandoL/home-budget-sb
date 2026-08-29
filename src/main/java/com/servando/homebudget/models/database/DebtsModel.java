@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -16,12 +13,6 @@ import java.time.Instant;
 @Getter
 @Setter
 public class DebtsModel extends SharedProperties {
-    @Id
-    String id;
-    @NotBlank
-    @NotNull
-    @Indexed(unique = true)
-    String name;
     @NotNull
     Double amount;
     @NotBlank
@@ -31,16 +22,13 @@ public class DebtsModel extends SharedProperties {
     @NotNull
     String description;
     @NotNull
-    Instant debtStarted;
+    String debtStarted;
     @Nullable
-    Instant datePaid;
+    String datePaid;
     @NotNull
     Double amountPaid;
-
-    @Nullable
-    Instant createdAt;
-    @Nullable
-    Instant updatedAt;
+    @NotNull
+    Double amountOwed;
 
     public DebtsModel(String name, BillingCycle billingCycle ) {
         super(name, billingCycle, Instant.now());

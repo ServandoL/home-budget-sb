@@ -14,7 +14,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         super(repository);
     }
 
-    public GenericResponseDto<String> createCreditCard(CreateCreditCardsRequestDto request) {
+    public GenericResponseDto<CreditCardsModel> createCreditCard(CreateCreditCardsRequestDto request) {
         var toCreate = new CreditCardsModel(
                 request.getName(),
                 request.getBillingCycle(),
@@ -36,6 +36,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
                 ResolveValueFactory.of(request.getDueDay(), other.getDueDay()),
                 ResolveValueFactory.of(request.getMinimumPayment(), other.getMinimumPayment())
         );
+        toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(id, request, toUpdate);
     }
 

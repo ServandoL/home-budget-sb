@@ -15,7 +15,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
         super(repository);
     }
 
-    public GenericResponseDto<String> createBill(CreateBillsRequestDto request) {
+    public GenericResponseDto<BillsModel> createBill(CreateBillsRequestDto request) {
         var toCreate = new BillsModel(
                 request.getName(),
                 request.getAmount(),
@@ -35,6 +35,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
                 ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
                 ResolveValueFactory.of(request.getDueDay(), other.getDueDay())
         );
+        toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(id, request, toUpdate);
     }
 }
