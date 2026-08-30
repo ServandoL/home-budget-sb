@@ -6,6 +6,7 @@ import com.servando.homebudget.models.database.SharedProperties;
 import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.SharedRequestProperties;
 import com.servando.homebudget.repository.BaseCrudRepository;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -16,9 +17,20 @@ public abstract class BaseCrudServiceImpl<TModel extends SharedProperties, TRepo
         this.repository = repository;
     }
 
+
     @Override
     public GenericResponseDto<List<TModel>> getAll() {
         var results = repository.findAll();
+        return new GenericResponseDto<>(
+                true,
+                "Successfully retrieved records",
+                results
+        );
+    }
+
+    @Override
+    public GenericResponseDto<List<TModel>> getAll(Sort sort) {
+        var results = repository.findAll(sort);
         return new GenericResponseDto<>(
                 true,
                 "Successfully retrieved records",

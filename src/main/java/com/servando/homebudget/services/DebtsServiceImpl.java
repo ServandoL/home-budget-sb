@@ -6,12 +6,20 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateDebtDto;
 import com.servando.homebudget.repository.DebtsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepository, CreateDebtDto, UpdateDebtDto> {
     DebtsServiceImpl(DebtsRepository debtsRepository) {
         super(debtsRepository);
+    }
+
+    public GenericResponseDto<List<DebtsModel>> findAll() {
+        var sort = Sort.by(Sort.Direction.DESC, "amountOwed");
+        return super.getAll(sort);
     }
 
     public GenericResponseDto<DebtsModel> createDebt(CreateDebtDto request) {

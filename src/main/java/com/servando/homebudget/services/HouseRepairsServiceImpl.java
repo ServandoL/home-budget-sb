@@ -6,14 +6,21 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateHouseRepairsDto;
 import com.servando.homebudget.repository.HouseRepairsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsModel, HouseRepairsRepository, CreateHouseRepairsDto, UpdateHouseRepairsDto> {
     protected HouseRepairsServiceImpl(HouseRepairsRepository repository) {
         super(repository);
+    }
+
+    public GenericResponseDto<List<HouseRepairsModel>> findAll() {
+        var sort = Sort.by(Sort.Direction.ASC, "priority");
+        return this.getAll(sort);
     }
 
     public GenericResponseDto<HouseRepairsModel> createRepair(CreateHouseRepairsDto request) {

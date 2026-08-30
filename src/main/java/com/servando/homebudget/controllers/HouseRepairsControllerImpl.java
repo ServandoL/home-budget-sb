@@ -21,7 +21,7 @@ public class HouseRepairsControllerImpl implements CrudController<HouseRepairsMo
 
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<HouseRepairsModel>>> getAll() {
-        var results = houseRepairService.getAll();
+        var results = houseRepairService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 

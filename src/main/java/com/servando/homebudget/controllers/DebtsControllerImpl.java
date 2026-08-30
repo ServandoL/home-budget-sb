@@ -23,7 +23,7 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
     @Override
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<DebtsModel>>> getAll() {
-        var results = debtsService.getAll();
+        var results = debtsService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 

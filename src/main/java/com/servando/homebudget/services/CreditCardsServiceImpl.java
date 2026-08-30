@@ -6,12 +6,20 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateCreditCardsRequestDto;
 import com.servando.homebudget.repository.CreditCardsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel, CreditCardsRepository, CreateCreditCardsRequestDto, UpdateCreditCardsRequestDto> {
     CreditCardsServiceImpl(CreditCardsRepository repository) {
         super(repository);
+    }
+
+    public GenericResponseDto<List<CreditCardsModel>> findAll() {
+        var sort = Sort.by(Sort.Direction.DESC, "currentBalance");
+        return this.getAll(sort);
     }
 
     public GenericResponseDto<CreditCardsModel> createCreditCard(CreateCreditCardsRequestDto request) {

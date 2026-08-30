@@ -20,7 +20,7 @@ public class CreditCardsControllerImpl implements CrudController<CreditCardsMode
 
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<CreditCardsModel>>> getAll() {
-        var results = creditCardsService.getAll();
+        var results = creditCardsService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
