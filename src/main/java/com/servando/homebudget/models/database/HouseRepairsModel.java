@@ -16,19 +16,19 @@ public class HouseRepairsModel extends SharedProperties {
     @NotBlank
     @NotNull
     String description;
+    @NotBlank
+    @NotNull
+    String category;
     @NotNull
     Integer priority;
     @NotNull
-    Integer cost;
-    @NotNull
     HouseRepairsStatus status;
+    @Nullable
+    Integer cost;
     @Nullable
     String notes;
     @Nullable
     String dateComplete;
-    @NotBlank
-    @NotNull
-    String category;
 
     public HouseRepairsModel(String name, Instant updatedAt) {
         super(name, BillingCycle.OPTIONAL, updatedAt);
