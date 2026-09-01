@@ -6,6 +6,8 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateDebtDto;
 import com.servando.homebudget.repository.DebtsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +19,13 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         super(debtsRepository);
     }
 
+    @Cacheable(cacheNames = "debts", key = "'all'")
     public GenericResponseDto<List<DebtsModel>> findAll() {
         var sort = Sort.by(Sort.Direction.DESC, "amountOwed");
         return super.getAll(sort);
     }
 
+    @CacheEvict(cacheNames = "debts", key = "'all'")
     public GenericResponseDto<DebtsModel> createDebt(CreateDebtDto request) {
         var toCreate = new DebtsModel(request.getName(), request.getBillingCycle());
         toCreate.setAmount(request.getAmount());
@@ -33,6 +37,7 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         return this.create(request, toCreate);
     }
 
+    @CacheEvict(cacheNames = "debts", key = "'all'")
     public GenericResponseDto<DebtsModel> updateDebt(String id, UpdateDebtDto request) {
         var other = findOtherById(id);
         var toUpdate = new DebtsModel(
@@ -54,5 +59,11 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         toUpdate.setAmount(amount);
         toUpdate.setAmountPaid(amountPaid);
         return this.update(id, request, toUpdate);
+    }
+
+    @Override
+    @CacheEvict(cacheNames = "debts", key = "'all'")
+    public GenericResponseDto<String> delete(String id) {
+        return super.delete(id);
     }
 }

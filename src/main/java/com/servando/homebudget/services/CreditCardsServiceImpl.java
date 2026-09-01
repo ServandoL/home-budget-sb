@@ -6,6 +6,8 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateCreditCardsRequestDto;
 import com.servando.homebudget.repository.CreditCardsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +19,13 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         super(repository);
     }
 
+    @Cacheable(cacheNames = "credit-cards", key = "'all'")
     public GenericResponseDto<List<CreditCardsModel>> findAll() {
         var sort = Sort.by(Sort.Direction.DESC, "currentBalance");
         return this.getAll(sort);
     }
 
+    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
     public GenericResponseDto<CreditCardsModel> createCreditCard(CreateCreditCardsRequestDto request) {
         var toCreate = new CreditCardsModel(
                 request.getName(),
@@ -34,6 +38,7 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         return this.create(request, toCreate);
     }
 
+    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
     public GenericResponseDto<CreditCardsModel> updateCreditCard(String id, UpdateCreditCardsRequestDto request) {
         var other = this.findOtherById(id);
         var toUpdate = new CreditCardsModel(
@@ -48,4 +53,9 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         return this.update(id, request, toUpdate);
     }
 
+    @Override
+    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
+    public GenericResponseDto<String> delete(String id) {
+        return super.delete(id);
+    }
 }

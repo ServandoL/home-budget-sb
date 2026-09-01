@@ -22,7 +22,7 @@ public class BillsControllerImpl implements CrudController<BillsModel, CreateBil
 
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<BillsModel>>> getAll() {
-        var results = billsService.getAll();
+        var results = billsService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 

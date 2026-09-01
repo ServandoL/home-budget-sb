@@ -20,7 +20,7 @@ public class IncomesControllerImpl implements CrudController<IncomesModel, Creat
 
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<IncomesModel>>> getAll() {
-        var results = incomeService.getAll();
+        var results = incomeService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 

@@ -20,7 +20,7 @@ public class SubscriptionsControllerImpl implements CrudController<Subscriptions
 
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<SubscriptionsModel>>> getAll() {
-        var results = subscriptionsService.getAll();
+        var results = subscriptionsService.findAll();
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 

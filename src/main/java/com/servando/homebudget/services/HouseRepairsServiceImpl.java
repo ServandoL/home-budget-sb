@@ -6,6 +6,8 @@ import com.servando.homebudget.models.dto.GenericResponseDto;
 import com.servando.homebudget.models.dto.UpdateHouseRepairsDto;
 import com.servando.homebudget.repository.HouseRepairsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +20,13 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         super(repository);
     }
 
+    @Cacheable(cacheNames = "house-repairs", key = "'all'")
     public GenericResponseDto<List<HouseRepairsModel>> findAll() {
         var sort = Sort.by(Sort.Direction.ASC, "priority");
         return this.getAll(sort);
     }
 
+    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
     public GenericResponseDto<HouseRepairsModel> createRepair(CreateHouseRepairsDto request) {
         var toCreate = new HouseRepairsModel(
                 request.getName(),
@@ -38,6 +42,7 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         return this.create(request, toCreate);
     }
 
+    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
     public GenericResponseDto<HouseRepairsModel> updateRepair(String id, UpdateHouseRepairsDto request) {
         var other = findOtherById(id);
         var toUpdate = new HouseRepairsModel(
@@ -52,5 +57,11 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toUpdate.setDateComplete(ResolveValueFactory.of(request.getDateCompleted(), other.getDateComplete()));
         toUpdate.setCategory(ResolveValueFactory.of(request.getCategory(), other.getCategory()));
         return this.update(id, request, toUpdate);
+    }
+
+    @Override
+    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
+    public GenericResponseDto<String> delete(String id) {
+        return super.delete(id);
     }
 }

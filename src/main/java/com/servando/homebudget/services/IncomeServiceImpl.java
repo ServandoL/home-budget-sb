@@ -4,7 +4,12 @@ import com.servando.homebudget.models.database.IncomesModel;
 import com.servando.homebudget.models.dto.*;
 import com.servando.homebudget.repository.IncomesRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, IncomesRepository, CreateIncomeRequestDto, UpdateIncomeRequestDto> {
@@ -12,6 +17,13 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         super(repository);
     }
 
+    @Cacheable(cacheNames = "incomes", key = "'all'")
+    public GenericResponseDto<List<IncomesModel>> findAll() {
+        var sort = Sort.by(Sort.Direction.DESC, "netAmount");
+        return this.getAll(sort);
+    }
+
+    @CacheEvict(cacheNames = "incomes", key = "'all'")
     public GenericResponseDto<IncomesModel> createIncome(CreateIncomeRequestDto request) {
         var toCreate = new IncomesModel(
                 request.getName(),
@@ -22,6 +34,7 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         return this.create(request, toCreate);
     }
 
+    @CacheEvict(cacheNames = "incomes", key = "'all'")
     public GenericResponseDto<IncomesModel> updateIncome(String id, UpdateIncomeRequestDto request) {
         var other = findOtherById(id);
         var toUpdate = new IncomesModel(
@@ -32,5 +45,11 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         );
         toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(id, request, toUpdate);
+    }
+
+    @Override
+    @CacheEvict(cacheNames = "incomes", key = "'all'")
+    public GenericResponseDto<String> delete(String id) {
+        return super.delete(id);
     }
 }

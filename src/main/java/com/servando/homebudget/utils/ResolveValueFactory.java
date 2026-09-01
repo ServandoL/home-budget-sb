@@ -1,9 +1,6 @@
 package com.servando.homebudget.utils;
 
-import com.servando.homebudget.models.database.BillCategory;
-import com.servando.homebudget.models.database.BillingCycle;
-import com.servando.homebudget.models.database.HouseRepairsStatus;
-import com.servando.homebudget.models.database.PayFrequency;
+import com.servando.homebudget.models.database.*;
 
 import java.time.Instant;
 
@@ -18,6 +15,10 @@ public class ResolveValueFactory<TValue> {
 
     private TValue resolveValue() {
         return this.request == null ? other : request;
+    }
+
+    public static PriorityLevel of(PriorityLevel request, PriorityLevel other) {
+        return new ResolveValueFactory<>(request, other).resolveValue();
     }
 
     public static HouseRepairsStatus of(HouseRepairsStatus request, HouseRepairsStatus other) {
