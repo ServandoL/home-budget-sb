@@ -22,7 +22,7 @@ public class BillsServiceImpl extends BaseCrudServiceImpl<BillsModel, BillsRepos
 
     @Cacheable(cacheNames = "bills", key = "'all'")
     public GenericResponseDto<List<BillsModel>> findAll() {
-        var sort = Sort.by(Sort.Direction.ASC, "category");
+        var sort = Sort.by(Sort.Direction.DESC, "amount");
         return super.getAll(sort);
     }
 
