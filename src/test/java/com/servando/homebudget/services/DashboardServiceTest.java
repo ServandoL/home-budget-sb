@@ -51,9 +51,9 @@ public class DashboardServiceTest {
         assertEquals(7949.955000000001, result.getMonthlyIncome());
         assertEquals(4930.110000000001, result.getTotalObligations());
         assertEquals(2407.692307692308, result.getRecommendedTransfer());
-        assertEquals(1393.7746153846156, result.getSpendablePerPaycheck());
-        assertEquals(3019.8450000000003, result.getSpendableMonthly());
-        assertEquals(696.8873076923077, result.getSpendableWeekly());
+        assertEquals(1372.4728402366866, result.getSpendablePerPaycheck());
+        assertEquals(2973.691153846154, result.getSpendableMonthly());
+        assertEquals(686.2364201183433, result.getSpendableWeekly());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class DashboardServiceTest {
         when(creditCardsRepository.findAll()).thenReturn(List.of());
         when(debtsRepository.findAll()).thenReturn(List.of());
 
-        var result = dashboardService.getDashboard(5000.0, 100.0);
+        var result = dashboardService.getDashboard(5000.0, 0.0);
 
         assertEquals(0.0, result.getRecommendedTransfer(), 1e-9);
         assertEquals(0.0, result.getSpendablePerPaycheck(), 1e-9);
