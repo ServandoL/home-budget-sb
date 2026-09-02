@@ -28,7 +28,7 @@ public class DashboardService {
     ExecutorService executor = Executors.newFixedThreadPool(5);
 
 
-    public DashboardDto getDashboard() {
+    public DashboardDto getDashboard(Double targetMonthlyTransfer, Double buffer) {
         var dashboard = new DashboardDto();
         CompletableFuture<List<IncomesModel>> incomesFuture =
                 CompletableFuture.supplyAsync(() -> incomesRepository.findAll(), executor);
@@ -60,15 +60,19 @@ public class DashboardService {
                 creditCards.stream().map(e -> new MonthlyBillCost(e.getMinimumPayment(), e.getBillingCycle())).toList()
         );
         var totalObligations = billsMonthly + subscriptionsMonthly + ccMonthly;
+        var recommendedTransfer = getRecommendedTransfer(incomes, targetMonthlyTransfer, buffer);
+        var spendableMonthly = getSpendableMonthly(calculateMonthly(incomes), totalObligations);
+        var spendablePerPaycheck = getSpendablePerPaycheckFromMonthly(spendableMonthly, incomes);
         dashboard.setMonthlyIncome(calculateMonthly(incomes));
+        dashboard.setTargetMonthlyTransfer(targetMonthlyTransfer);
         dashboard.setBillsMonthly(billsMonthly);
         dashboard.setSubscriptionsMonthly(subscriptionsMonthly);
         dashboard.setCreditCardsMonthly(ccMonthly);
         dashboard.setTotalObligations(totalObligations);
-        dashboard.setRecommendedTransfer(getRecommendedTransfer(incomes, totalObligations));
-        dashboard.setSpendablePerPaycheck(getSpendablePerPaycheck(incomes, totalObligations));
-        dashboard.setSpendableWeekly(getSpendableWeekly(dashboard.getMonthlyIncome(), totalObligations));
-        dashboard.setSpendableMonthly(getSpendableMonthly(dashboard.getMonthlyIncome(), totalObligations));
+        dashboard.setRecommendedTransfer(recommendedTransfer);
+        dashboard.setSpendablePerPaycheck(spendablePerPaycheck);
+        dashboard.setSpendableMonthly(spendableMonthly);
+        dashboard.setSpendableWeekly(getSpendableWeeklyFromMonthly(spendableMonthly));
         dashboard.setIsOverBudget(dashboard.getSpendableMonthly() < (double) 0);
         dashboard.setTotalDebts(getTotalDebt(debts));
         dashboard.setSubscriptionCounts(subscriptions.size());
@@ -78,11 +82,8 @@ public class DashboardService {
         return dashboard;
     }
 
-    /**
-     * Monthly income minus total monthly obligations
-     */
-    private Double getSpendableMonthly(Double monthlyIncome, Double obligations) {
-        return monthlyIncome - obligations;
+    private Double getSpendableMonthly(Double monthlyIncome, Double totalObligations) {
+        return monthlyIncome - totalObligations;
     }
 
     private Double calculateMonthly(List<IncomesModel> incomes) {
@@ -113,8 +114,8 @@ public class DashboardService {
     /**
      * (monthlyIncome − obligations) × 12 ÷ 52
      */
-    private Double getSpendableWeekly(Double monthlyIncome, Double obligations) {
-        return ((monthlyIncome - obligations) * 12) / 52;
+    private Double getSpendableWeeklyFromMonthly(Double spendableMonthly) {
+        return (spendableMonthly * 12) / 52;
     }
 
     private Integer getMonthlyBillingCycle(BillingCycle billingCycle) {
@@ -126,12 +127,12 @@ public class DashboardService {
     }
 
     /**
-     * Recommended Fidelity → bills transfer per pay period = obligations × 12 ÷ periodsPerYear
+     * Recommended transfer per pay period = monthly target ÷ pay periods per month
      */
-    private Double getRecommendedTransfer(List<IncomesModel> incomes, Double obligations) {
+    private Double getRecommendedTransfer(List<IncomesModel> incomes, Double targetMonthlyTransfer, Double buffer) {
         if (incomes.isEmpty()) return (double) 0;
         var frequency = getIncomesFrequency(incomes);
-        return (obligations * 12) / getFrequency(frequency);
+        return (targetMonthlyTransfer / (getFrequency(frequency) / 12.0)) + buffer;
     }
 
     private PayFrequency getIncomesFrequency(List<IncomesModel> incomes) {
@@ -146,18 +147,21 @@ public class DashboardService {
         return costs.stream().mapToDouble(this::getCycleBillingCost).sum();
     }
 
-    /**
-     * Net paycheck minus the recommended transfer
-     */
-    private Double getSpendablePerPaycheck(List<IncomesModel> incomes, Double obligations) {
+    private Double getSpendablePerPaycheckFromMonthly(Double spendableMonthly, List<IncomesModel> incomes) {
         if (incomes.isEmpty()) return (double) 0;
-        var totalAnnualIncome = incomes.stream().mapToDouble(this::getAnnualIncome).sum();
-        var totalPeriodsPerYear = incomes.
-                stream()
+        var totalPeriodsPerYear = getTotalPayPeriodsPerYear(incomes);
+        return spendableMonthly * (12.0 / totalPeriodsPerYear);
+    }
+//    Monthly Income=B3=$7,949.96, Monthly Expenses=E2=$4,930.11
+//    =(((B3-E2)*12)/52)*2
+    private Double getSpendablePerPaycheck(Double monthlyIncome, Double monthlyExpense) {
+        return (((monthlyIncome - monthlyExpense)*12)/52) * 2;
+    }
+
+    private Integer getTotalPayPeriodsPerYear(List<IncomesModel> incomes) {
+        return incomes.stream()
                 .map(e -> getFrequency(e.getFrequency()))
                 .reduce(0, Integer::sum);
-        var averageNetPerPaycheck = totalAnnualIncome / totalPeriodsPerYear;
-        return averageNetPerPaycheck - getRecommendedTransfer(incomes, obligations);
     }
 
     private Double getCycleBillingCost(MonthlyBillCost cost) {

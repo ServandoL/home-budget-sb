@@ -12,6 +12,8 @@ import lombok.Setter;
 @Setter
 public class DashboardDto{
         @NotNull
+        private Double targetMonthlyTransfer;
+        @NotNull
         private Double monthlyIncome;
         @NotNull
         private Double billsMonthly;
