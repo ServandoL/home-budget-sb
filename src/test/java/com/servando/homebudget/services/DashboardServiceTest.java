@@ -71,4 +71,33 @@ public class DashboardServiceTest {
         assertEquals(0.0, result.getSpendableMonthly(), 1e-9);
         assertEquals(0.0, result.getSpendableWeekly(), 1e-9);
     }
+
+    @Test
+    void getDashboard_marksOverBudgetAndUsesAllBillingCycleBranches() {
+        when(incomesRepository.findAll()).thenReturn(List.of(
+                new IncomesModel("Primary", BillingCycle.MONTHLY, PayFrequency.SEMI_MONTHLY, 1000.0)
+        ));
+        when(billsRepository.findAll()).thenReturn(List.of(
+                new BillsModel("Annual", 1200.0, BillCategory.RENT, BillingCycle.ANNUAL, 1),
+                new BillsModel("Semiannual", 600.0, BillCategory.RENT, BillingCycle.SEMIANNUAL, 1),
+                new BillsModel("Optional", 240.0, BillCategory.RENT, BillingCycle.OPTIONAL, 1)
+        ));
+        when(subscriptionsRepository.findAll()).thenReturn(List.of());
+        when(creditCardsRepository.findAll()).thenReturn(List.of(
+                new CreditCardsModel("CC", BillingCycle.MONTHLY, 0.0, 0.0, 1, 0.0)
+        ));
+        var debt = new DebtsModel("Debt", BillingCycle.MONTHLY);
+        debt.setAmountOwed(50.0);
+        when(debtsRepository.findAll()).thenReturn(List.of(debt));
+
+        var result = dashboardService.getDashboard(0.0, 200.0);
+
+        assertEquals(220.0, result.getBillsMonthly(), 1e-9);
+        assertEquals(0.0, result.getSubscriptionsMonthly(), 1e-9);
+        assertEquals(0.0, result.getCreditCardsMonthly(), 1e-9);
+        assertEquals(50.0, result.getTotalDebts(), 1e-9);
+        assertEquals(PayFrequency.SEMI_MONTHLY, result.getFrequency());
+        assertFalse(result.getIsOverBudget());
+        assertEquals(200.0, result.getRecommendedTransfer(), 1e-9);
+    }
 }
