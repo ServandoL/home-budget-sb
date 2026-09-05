@@ -17,7 +17,7 @@ public class DashboardController {
 
     @GetMapping
     public ResponseEntity<DashboardDto> dashboard(
-            @RequestParam Double targetMonthlyTransfer,
+            @RequestParam(required = false) Double targetMonthlyTransfer,
             @RequestParam(defaultValue = "0") Double payPeriodBuffer
     ) {
         var result = dashboardService.getDashboard(targetMonthlyTransfer, payPeriodBuffer);

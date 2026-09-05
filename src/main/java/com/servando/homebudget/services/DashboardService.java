@@ -34,7 +34,8 @@ public class DashboardService {
      * Builds a dashboard snapshot by loading all financial records in parallel and deriving
      * monthly, weekly, and per-paycheck budget values from them.
      *
-     * @param targetMonthlyTransfer the amount the user wants to transfer into savings or another goal each month
+     * @param targetMonthlyTransfer the amount the user wants to transfer into savings or another goal each month;
+     *                              when null, a safe amount is auto-calculated from surplus income
      * @param payPeriodBuffer additional buffer amount to reserve from each pay period
      * @return a populated dashboard summary
      */
@@ -72,12 +73,15 @@ public class DashboardService {
         var incomeFrequency = getIncomesFrequency(incomes);
         var totalObligations = billsMonthly + subscriptionsMonthly + ccMonthly;
         var totalIncome = calculateMonthly(incomes);
-        var recommendedTransferPerPayPeriod = getRecommendedTransferPerPayPeriod(incomes, targetMonthlyTransfer, payPeriodBuffer);
+        var effectiveTargetMonthlyTransfer = targetMonthlyTransfer != null
+                ? targetMonthlyTransfer
+                : getAutoTargetMonthlyTransfer(totalObligations);
+        var recommendedTransferPerPayPeriod = getRecommendedTransferPerPayPeriod(incomes, effectiveTargetMonthlyTransfer, payPeriodBuffer);
         var spendableMonthly = getSpendableMonthly(totalIncome, totalObligations, payPeriodBuffer, incomeFrequency);
         var spendablePerPaycheck = getSpendablePerPaycheckFromMonthly(spendableMonthly, incomes);
         var spendableWeekly = getSpendableWeeklyFromMonthly(spendableMonthly);
         dashboard.setMonthlyIncome(totalIncome);
-        dashboard.setTargetMonthlyTransfer(targetMonthlyTransfer);
+        dashboard.setTargetMonthlyTransfer(effectiveTargetMonthlyTransfer);
         dashboard.setBillsMonthly(billsMonthly);
         dashboard.setSubscriptionsMonthly(subscriptionsMonthly);
         dashboard.setCreditCardsMonthly(ccMonthly);
@@ -93,6 +97,17 @@ public class DashboardService {
         dashboard.setBillCounts(bills.size());
         dashboard.setFrequency(incomeFrequency);
         return dashboard;
+    }
+
+    /**
+     * Auto-calculates a safe monthly transfer target when the caller doesn't supply one: the amount
+     * needed to cover total monthly obligations (bills, subscriptions, credit card minimums).
+     *
+     * @param totalObligations total monthly obligations
+     * @return auto-calculated safe monthly transfer amount
+     */
+    private Double getAutoTargetMonthlyTransfer(Double totalObligations) {
+        return totalObligations;
     }
 
     /**
