@@ -1,5 +1,9 @@
 server:
   port: {SERVER_PORT}
+  # nginx reaches the API over plain HTTP. Read its X-Forwarded-* headers so the
+  # API sees the browser's https origin; otherwise every save looks cross-origin
+  # to the CORS check and gets 403.
+  forward-headers-strategy: framework
 
 # Cloudflare Access: the "home" Access application's team domain and AUD tag.
 access:
