@@ -1,12 +1,6 @@
 server:
   port: {SERVER_PORT}
 
-logging:
-  level:
-    com:
-      servando:
-        homebudget: TRACE
-
 # Cloudflare Access: the "home" Access application's team domain and AUD tag.
 access:
   team-domain: ${ACCESS_TEAM_DOMAIN:}

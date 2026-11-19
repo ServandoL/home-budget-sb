@@ -1,0 +1,6 @@
+# Local development only: TRACE puts request details in the logs.
+logging:
+  level:
+    com:
+      servando:
+        homebudget: TRACE
