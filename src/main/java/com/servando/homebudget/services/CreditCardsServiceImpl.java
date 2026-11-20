@@ -19,14 +19,14 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
         super(repository);
     }
 
-    @Cacheable(cacheNames = "credit-cards", key = "'all'")
-    public GenericResponseDto<List<CreditCardsModel>> findAll() {
+    @Cacheable(cacheNames = "credit-cards", key = "#householdId")
+    public GenericResponseDto<List<CreditCardsModel>> findAll(String householdId) {
         var sort = Sort.by(Sort.Direction.DESC, "currentBalance");
-        return this.getAll(sort);
+        return this.getAll(householdId, sort);
     }
 
-    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
-    public GenericResponseDto<CreditCardsModel> createCreditCard(CreateCreditCardsRequestDto request) {
+    @CacheEvict(cacheNames = "credit-cards", key = "#householdId")
+    public GenericResponseDto<CreditCardsModel> createCreditCard(String householdId, CreateCreditCardsRequestDto request) {
         var toCreate = new CreditCardsModel(
                 request.getName(),
                 request.getBillingCycle(),
@@ -35,12 +35,12 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
                 request.getDueDay(),
                 request.getMinimumPayment()
         );
-        return this.create(request, toCreate);
+        return this.create(householdId, request, toCreate);
     }
 
-    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
-    public GenericResponseDto<CreditCardsModel> updateCreditCard(String id, UpdateCreditCardsRequestDto request) {
-        var other = this.findOtherById(id);
+    @CacheEvict(cacheNames = "credit-cards", key = "#householdId")
+    public GenericResponseDto<CreditCardsModel> updateCreditCard(String householdId, String id, UpdateCreditCardsRequestDto request) {
+        var other = this.findOtherById(householdId, id);
         var toUpdate = new CreditCardsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),
                 ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
@@ -50,12 +50,12 @@ public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel
                 ResolveValueFactory.of(request.getMinimumPayment(), other.getMinimumPayment())
         );
         toUpdate.setCreatedAt(other.getCreatedAt());
-        return this.update(id, request, toUpdate);
+        return this.update(householdId, id, request, toUpdate);
     }
 
     @Override
-    @CacheEvict(cacheNames = "credit-cards", key = "'all'")
-    public GenericResponseDto<String> delete(String id) {
-        return super.delete(id);
+    @CacheEvict(cacheNames = "credit-cards", key = "#householdId")
+    public GenericResponseDto<String> delete(String householdId, String id) {
+        return super.delete(householdId, id);
     }
 }

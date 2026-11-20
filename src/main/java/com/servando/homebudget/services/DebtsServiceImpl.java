@@ -19,14 +19,14 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         super(debtsRepository);
     }
 
-    @Cacheable(cacheNames = "debts", key = "'all'")
-    public GenericResponseDto<List<DebtsModel>> findAll() {
+    @Cacheable(cacheNames = "debts", key = "#householdId")
+    public GenericResponseDto<List<DebtsModel>> findAll(String householdId) {
         var sort = Sort.by(Sort.Direction.DESC, "amountOwed");
-        return super.getAll(sort);
+        return super.getAll(householdId, sort);
     }
 
-    @CacheEvict(cacheNames = "debts", key = "'all'")
-    public GenericResponseDto<DebtsModel> createDebt(CreateDebtDto request) {
+    @CacheEvict(cacheNames = "debts", key = "#householdId")
+    public GenericResponseDto<DebtsModel> createDebt(String householdId, CreateDebtDto request) {
         var toCreate = new DebtsModel(request.getName(), request.getBillingCycle());
         toCreate.setAmount(request.getAmount());
         toCreate.setAmountPaid(request.getAmountPaid() == null ? 0 : request.getAmountPaid());
@@ -34,12 +34,12 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         toCreate.setDebtStarted(request.getDebtStarted());
         toCreate.setDescription(request.getDescription());
         toCreate.setFrom(request.getFrom());
-        return this.create(request, toCreate);
+        return this.create(householdId, request, toCreate);
     }
 
-    @CacheEvict(cacheNames = "debts", key = "'all'")
-    public GenericResponseDto<DebtsModel> updateDebt(String id, UpdateDebtDto request) {
-        var other = findOtherById(id);
+    @CacheEvict(cacheNames = "debts", key = "#householdId")
+    public GenericResponseDto<DebtsModel> updateDebt(String householdId, String id, UpdateDebtDto request) {
+        var other = findOtherById(householdId, id);
         var toUpdate = new DebtsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),
                 ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle())
@@ -58,12 +58,12 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         toUpdate.setDatePaid(ResolveValueFactory.of(request.getDatePaid(), other.getDatePaid()));
         toUpdate.setAmount(amount);
         toUpdate.setAmountPaid(amountPaid);
-        return this.update(id, request, toUpdate);
+        return this.update(householdId, id, request, toUpdate);
     }
 
     @Override
-    @CacheEvict(cacheNames = "debts", key = "'all'")
-    public GenericResponseDto<String> delete(String id) {
-        return super.delete(id);
+    @CacheEvict(cacheNames = "debts", key = "#householdId")
+    public GenericResponseDto<String> delete(String householdId, String id) {
+        return super.delete(householdId, id);
     }
 }

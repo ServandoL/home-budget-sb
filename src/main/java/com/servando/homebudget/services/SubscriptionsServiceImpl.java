@@ -17,14 +17,14 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
         super(repository);
     }
 
-    @Cacheable(cacheNames = "subscriptions", key = "'all'")
-    public GenericResponseDto<List<SubscriptionsModel>> findAll() {
+    @Cacheable(cacheNames = "subscriptions", key = "#householdId")
+    public GenericResponseDto<List<SubscriptionsModel>> findAll(String householdId) {
         var sort = Sort.by(Sort.Direction.ASC, "priorityLevel");
-        return super.getAll(sort);
+        return super.getAll(householdId, sort);
     }
 
-    @CacheEvict(cacheNames = "subscriptions", key = "'all'")
-    public GenericResponseDto<SubscriptionsModel> createIncome(CreateSubscriptionsRequestDto request) {
+    @CacheEvict(cacheNames = "subscriptions", key = "#householdId")
+    public GenericResponseDto<SubscriptionsModel> createIncome(String householdId, CreateSubscriptionsRequestDto request) {
         var toCreate = new SubscriptionsModel(
                 request.getName(),
                 request.getBillingCycle(),
@@ -32,12 +32,12 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
                 request.getBillingDay(),
                 request.getPriorityLevel()
         );
-        return this.create(request, toCreate);
+        return this.create(householdId, request, toCreate);
     }
 
-    @CacheEvict(cacheNames = "subscriptions", key = "'all'")
-    public GenericResponseDto<SubscriptionsModel> updateIncome(String id, UpdateSubscriptionsRequestDto request) {
-        var other = findOtherById(id);
+    @CacheEvict(cacheNames = "subscriptions", key = "#householdId")
+    public GenericResponseDto<SubscriptionsModel> updateIncome(String householdId, String id, UpdateSubscriptionsRequestDto request) {
+        var other = findOtherById(householdId, id);
         var toUpdate = new SubscriptionsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),
                 ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
@@ -46,12 +46,12 @@ public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsM
                 ResolveValueFactory.of(request.getPriorityLevel(), other.getPriorityLevel())
         );
         toUpdate.setCreatedAt(other.getCreatedAt());
-        return this.update(id, request, toUpdate);
+        return this.update(householdId, id, request, toUpdate);
     }
 
     @Override
-    @CacheEvict(cacheNames = "subscriptions", key = "'all'")
-    public GenericResponseDto<String> delete(String id) {
-        return super.delete(id);
+    @CacheEvict(cacheNames = "subscriptions", key = "#householdId")
+    public GenericResponseDto<String> delete(String householdId, String id) {
+        return super.delete(householdId, id);
     }
 }

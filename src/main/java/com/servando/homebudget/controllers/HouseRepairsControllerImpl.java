@@ -1,5 +1,6 @@
 package com.servando.homebudget.controllers;
 
+import com.home.household.CurrentMember;
 import com.servando.homebudget.models.database.HouseRepairsModel;
 import com.servando.homebudget.models.dto.CreateHouseRepairsDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
@@ -20,26 +21,26 @@ public class HouseRepairsControllerImpl implements CrudController<HouseRepairsMo
     private HouseRepairsServiceImpl houseRepairService;
 
     @GetMapping
-    public ResponseEntity<GenericResponseDto<List<HouseRepairsModel>>> getAll() {
-        var results = houseRepairService.findAll();
+    public ResponseEntity<GenericResponseDto<List<HouseRepairsModel>>> getAll(CurrentMember member) {
+        var results = houseRepairService.findAll(member.householdId());
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
 
     @PostMapping
-    public ResponseEntity<GenericResponseDto<HouseRepairsModel>> create(@RequestBody @Valid CreateHouseRepairsDto toCreate) {
-        var response = houseRepairService.createRepair(toCreate);
+    public ResponseEntity<GenericResponseDto<HouseRepairsModel>> create(CurrentMember member, @RequestBody @Valid CreateHouseRepairsDto toCreate) {
+        var response = houseRepairService.createRepair(member.householdId(), toCreate);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<HouseRepairsModel>> update(@PathVariable @Valid String id, @RequestBody @Valid UpdateHouseRepairsDto toUpdate) {
-        var response = houseRepairService.updateRepair(id, toUpdate);
+    public ResponseEntity<GenericResponseDto<HouseRepairsModel>> update(CurrentMember member, @PathVariable @Valid String id, @RequestBody @Valid UpdateHouseRepairsDto toUpdate) {
+        var response = houseRepairService.updateRepair(member.householdId(), id, toUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<GenericResponseDto<String>> delete(@PathVariable @Valid String id) {
-        var result = houseRepairService.delete(id);
+    public ResponseEntity<GenericResponseDto<String>> delete(CurrentMember member, @PathVariable @Valid String id) {
+        var result = houseRepairService.delete(member.householdId(), id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

@@ -28,6 +28,24 @@ A consistent layered design across every resource:
 A `DashboardService` aggregates the resources into a single dashboard DTO
 (covered by `DashboardServiceTest`).
 
+## Households
+Every record belongs to a household from household-api (`household-api-sb`), shared with the other
+home apps. Each request names one in `X-Household-Id`; `home-household-spring` (from mavenLocal)
+checks the signed-in member belongs to it in household-api's `HOUSEHOLD` database and hands the
+controllers a `CurrentMember`: `428` without the header, `403` for a household they're not in.
+
+- `BaseCrudRepository` extends `Repository`, not `MongoRepository`, and every method takes the
+  household, so an unscoped query doesn't compile.
+- Names are unique per household: a unique `(householdId, name)` index on every collection, created
+  at startup (`app.mongo.create-indexes`, on by default).
+- Caches are keyed by household.
+- `BudgetPurger` deletes a household's records 30 days after it's deleted in Home.
+- `HouseholdScopingTests` checks all of that against MongoDB in Testcontainers (needs Docker).
+- `scripts/backfill-household.js` gave the records from before households to "My household".
+
+Locally, the `local` profile signs every request in as `LOCAL_MEMBER_EMAIL` (default
+`dev@example.com`), who needs a household in a local household-api like anyone else.
+
 ## Running locally
 ```bash
 ./gradlew test

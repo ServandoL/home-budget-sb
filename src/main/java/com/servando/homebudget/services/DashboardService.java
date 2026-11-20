@@ -5,6 +5,7 @@ import com.servando.homebudget.models.dto.DashboardDto;
 import com.servando.homebudget.models.dto.MonthlyBillCost;
 import com.servando.homebudget.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -34,23 +35,24 @@ public class DashboardService {
      * Builds a dashboard snapshot by loading all financial records in parallel and deriving
      * monthly, weekly, and per-paycheck budget values from them.
      *
+     * @param householdId the household whose records to total
      * @param targetMonthlyTransfer the amount the user wants to transfer into savings or another goal each month;
      *                              when null, a safe amount is auto-calculated from surplus income
      * @param payPeriodBuffer additional buffer amount to reserve from each pay period
      * @return a populated dashboard summary
      */
-    public DashboardDto getDashboard(Double targetMonthlyTransfer, Double payPeriodBuffer) {
+    public DashboardDto getDashboard(String householdId, Double targetMonthlyTransfer, Double payPeriodBuffer) {
         var dashboard = new DashboardDto();
         CompletableFuture<List<IncomesModel>> incomesFuture =
-                CompletableFuture.supplyAsync(() -> incomesRepository.findAll(), executor);
+                CompletableFuture.supplyAsync(() -> incomesRepository.findAllByHouseholdId(householdId, Sort.unsorted()), executor);
         CompletableFuture<List<BillsModel>> billsFuture =
-                CompletableFuture.supplyAsync(() -> billsRepository.findAll(), executor);
+                CompletableFuture.supplyAsync(() -> billsRepository.findAllByHouseholdId(householdId, Sort.unsorted()), executor);
         CompletableFuture<List<SubscriptionsModel>> subsFuture =
-                CompletableFuture.supplyAsync(() -> subscriptionsRepository.findAll(), executor);
+                CompletableFuture.supplyAsync(() -> subscriptionsRepository.findAllByHouseholdId(householdId, Sort.unsorted()), executor);
         CompletableFuture<List<CreditCardsModel>> cardsFuture =
-                CompletableFuture.supplyAsync(() -> creditCardsRepository.findAll(), executor);
+                CompletableFuture.supplyAsync(() -> creditCardsRepository.findAllByHouseholdId(householdId, Sort.unsorted()), executor);
         CompletableFuture<List<DebtsModel>> debtsFuture =
-                CompletableFuture.supplyAsync(() -> debtsRepository.findAll(), executor);
+                CompletableFuture.supplyAsync(() -> debtsRepository.findAllByHouseholdId(householdId, Sort.unsorted()), executor);
         CompletableFuture.allOf(
                 incomesFuture, billsFuture, subsFuture, cardsFuture, debtsFuture
         ).join();

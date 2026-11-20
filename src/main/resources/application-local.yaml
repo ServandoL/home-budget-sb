@@ -1,3 +1,8 @@
+# Local development: no Cloudflare Access; every request is LOCAL_MEMBER_EMAIL, who needs a
+# household in household-api's database like anyone else.
+local:
+  member-email: ${LOCAL_MEMBER_EMAIL:dev@example.com}
+
 # Local development only: TRACE puts request details in the logs.
 logging:
   level:

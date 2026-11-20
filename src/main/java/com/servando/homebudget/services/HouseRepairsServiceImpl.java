@@ -20,14 +20,14 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         super(repository);
     }
 
-    @Cacheable(cacheNames = "house-repairs", key = "'all'")
-    public GenericResponseDto<List<HouseRepairsModel>> findAll() {
+    @Cacheable(cacheNames = "house-repairs", key = "#householdId")
+    public GenericResponseDto<List<HouseRepairsModel>> findAll(String householdId) {
         var sort = Sort.by(Sort.Direction.ASC, "priority");
-        return this.getAll(sort);
+        return this.getAll(householdId, sort);
     }
 
-    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
-    public GenericResponseDto<HouseRepairsModel> createRepair(CreateHouseRepairsDto request) {
+    @CacheEvict(cacheNames = "house-repairs", key = "#householdId")
+    public GenericResponseDto<HouseRepairsModel> createRepair(String householdId, CreateHouseRepairsDto request) {
         var toCreate = new HouseRepairsModel(
                 request.getName(),
                 Instant.now()
@@ -39,12 +39,12 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toCreate.setNotes(request.getNotes());
         toCreate.setDateComplete(request.getDateCompleted());
         toCreate.setCategory(request.getCategory());
-        return this.create(request, toCreate);
+        return this.create(householdId, request, toCreate);
     }
 
-    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
-    public GenericResponseDto<HouseRepairsModel> updateRepair(String id, UpdateHouseRepairsDto request) {
-        var other = findOtherById(id);
+    @CacheEvict(cacheNames = "house-repairs", key = "#householdId")
+    public GenericResponseDto<HouseRepairsModel> updateRepair(String householdId, String id, UpdateHouseRepairsDto request) {
+        var other = findOtherById(householdId, id);
         var toUpdate = new HouseRepairsModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),
                 Instant.now()
@@ -56,12 +56,12 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toUpdate.setNotes(ResolveValueFactory.of(request.getNotes(), other.getNotes()));
         toUpdate.setDateComplete(ResolveValueFactory.of(request.getDateCompleted(), other.getDateComplete()));
         toUpdate.setCategory(ResolveValueFactory.of(request.getCategory(), other.getCategory()));
-        return this.update(id, request, toUpdate);
+        return this.update(householdId, id, request, toUpdate);
     }
 
     @Override
-    @CacheEvict(cacheNames = "house-repairs", key = "'all'")
-    public GenericResponseDto<String> delete(String id) {
-        return super.delete(id);
+    @CacheEvict(cacheNames = "house-repairs", key = "#householdId")
+    public GenericResponseDto<String> delete(String householdId, String id) {
+        return super.delete(householdId, id);
     }
 }

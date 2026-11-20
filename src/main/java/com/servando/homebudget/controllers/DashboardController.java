@@ -1,5 +1,6 @@
 package com.servando.homebudget.controllers;
 
+import com.home.household.CurrentMember;
 import com.servando.homebudget.models.dto.DashboardDto;
 import com.servando.homebudget.services.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,11 @@ public class DashboardController {
 
     @GetMapping
     public ResponseEntity<DashboardDto> dashboard(
+            CurrentMember member,
             @RequestParam(required = false) Double targetMonthlyTransfer,
             @RequestParam(defaultValue = "0") Double payPeriodBuffer
     ) {
-        var result = dashboardService.getDashboard(targetMonthlyTransfer, payPeriodBuffer);
+        var result = dashboardService.getDashboard(member.householdId(), targetMonthlyTransfer, payPeriodBuffer);
         return ResponseEntity.ok(result);
     }
 }

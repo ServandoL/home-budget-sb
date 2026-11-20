@@ -17,26 +17,26 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
         super(repository);
     }
 
-    @Cacheable(cacheNames = "incomes", key = "'all'")
-    public GenericResponseDto<List<IncomesModel>> findAll() {
+    @Cacheable(cacheNames = "incomes", key = "#householdId")
+    public GenericResponseDto<List<IncomesModel>> findAll(String householdId) {
         var sort = Sort.by(Sort.Direction.DESC, "netAmount");
-        return this.getAll(sort);
+        return this.getAll(householdId, sort);
     }
 
-    @CacheEvict(cacheNames = "incomes", key = "'all'")
-    public GenericResponseDto<IncomesModel> createIncome(CreateIncomeRequestDto request) {
+    @CacheEvict(cacheNames = "incomes", key = "#householdId")
+    public GenericResponseDto<IncomesModel> createIncome(String householdId, CreateIncomeRequestDto request) {
         var toCreate = new IncomesModel(
                 request.getName(),
                 request.getBillingCycle(),
                 request.getFrequency(),
                 request.getNetAmount()
         );
-        return this.create(request, toCreate);
+        return this.create(householdId, request, toCreate);
     }
 
-    @CacheEvict(cacheNames = "incomes", key = "'all'")
-    public GenericResponseDto<IncomesModel> updateIncome(String id, UpdateIncomeRequestDto request) {
-        var other = findOtherById(id);
+    @CacheEvict(cacheNames = "incomes", key = "#householdId")
+    public GenericResponseDto<IncomesModel> updateIncome(String householdId, String id, UpdateIncomeRequestDto request) {
+        var other = findOtherById(householdId, id);
         var toUpdate = new IncomesModel(
                 ResolveValueFactory.of(request.getName(), other.getName()),
                 ResolveValueFactory.of(request.getBillingCycle(), other.getBillingCycle()),
@@ -44,12 +44,12 @@ public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, Incomes
                 ResolveValueFactory.of(request.getNetAmount(), other.getNetAmount())
         );
         toUpdate.setCreatedAt(other.getCreatedAt());
-        return this.update(id, request, toUpdate);
+        return this.update(householdId, id, request, toUpdate);
     }
 
     @Override
-    @CacheEvict(cacheNames = "incomes", key = "'all'")
-    public GenericResponseDto<String> delete(String id) {
-        return super.delete(id);
+    @CacheEvict(cacheNames = "incomes", key = "#householdId")
+    public GenericResponseDto<String> delete(String householdId, String id) {
+        return super.delete(householdId, id);
     }
 }

@@ -1,5 +1,6 @@
 package com.servando.homebudget.models.database;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
 import java.time.Instant;
 
@@ -16,9 +18,15 @@ import java.time.Instant;
 public class SharedProperties {
     @Id
     String id;
+    /**
+     * The household that owns the record, stored as an ObjectId. Names are unique per household:
+     * MongoConfiguration creates a unique (householdId, name) index on every collection.
+     */
+    @JsonIgnore
+    @Field(targetType = FieldType.OBJECT_ID)
+    String householdId;
     @NotBlank
     @NotNull
-    @Indexed(unique = true)
     String name;
     @NotNull
     BillingCycle billingCycle;

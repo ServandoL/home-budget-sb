@@ -1,12 +1,29 @@
 package com.servando.homebudget.repository;
 
 
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.data.repository.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
+/**
+ * Every method takes the household, and there is no unscoped findAll or findById (this extends
+ * Repository, not MongoRepository), so a query that forgets the household doesn't compile.
+ */
 @NoRepositoryBean
-public interface BaseCrudRepository<TModel> extends MongoRepository<TModel, String> {
-    Optional<TModel> findByName(String name);
+public interface BaseCrudRepository<TModel> extends Repository<TModel, String> {
+    List<TModel> findAllByHouseholdId(String householdId, Sort sort);
+
+    Optional<TModel> findByIdAndHouseholdId(String id, String householdId);
+
+    Optional<TModel> findByHouseholdIdAndName(String householdId, String name);
+
+    <S extends TModel> S save(S model);
+
+    long deleteByIdAndHouseholdId(String id, String householdId);
+
+    /** For the purge once a deleted household's restore window has passed. */
+    long deleteByHouseholdId(String householdId);
 }

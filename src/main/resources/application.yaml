@@ -5,6 +5,11 @@ server:
   # to the CORS check and gets 403.
   forward-headers-strategy: framework
 
+# household-api's database. Every request names a household in X-Household-Id, and
+# home-household-spring checks the member belongs to it there.
+household:
+  database: ${HOUSEHOLD_DATABASE:HOUSEHOLD}
+
 # Cloudflare Access: the "home" Access application's team domain and AUD tag.
 access:
   team-domain: ${ACCESS_TEAM_DOMAIN:}
