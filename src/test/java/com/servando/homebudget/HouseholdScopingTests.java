@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -156,6 +158,26 @@ class HouseholdScopingTests {
         assertThat(caches.getCache("bills").get(samHome)).isNull();
         bills(SAM, samHome).andExpect(jsonPath("$.data", empty()));
         bills(KIM, kimHome).andExpect(jsonPath("$.data[*].name", contains("Power")));
+    }
+
+    @Test
+    void everyWriteTellsTheHouseholdsOtherDevices() throws Exception {
+        MvcResult samsStream = mvc.perform(get("/api/v1/events").with(as(SAM, samHome)))
+                .andExpect(request().asyncStarted()).andReturn();
+        MvcResult kimsStream = mvc.perform(get("/api/v1/events").with(as(KIM, kimHome)))
+                .andExpect(request().asyncStarted()).andReturn();
+
+        String rent = JsonPath.read(createBill(SAM, samHome, "Rent", 1500).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString(), "$.data.id");
+        mvc.perform(json(put("/api/v1/bills/" + rent), "{\"name\":\"Rent\",\"amount\":1600}").with(as(SAM, samHome)))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/api/v1/bills/" + rent).with(as(SAM, samHome))).andExpect(status().isOk());
+
+        assertThat(samsStream.getResponse().getContentAsString())
+                .contains("data:{\"resource\":\"bills\",\"action\":\"created\",\"id\":\"" + rent + "\"}")
+                .contains("data:{\"resource\":\"bills\",\"action\":\"updated\",\"id\":\"" + rent + "\"}")
+                .contains("data:{\"resource\":\"bills\",\"action\":\"deleted\",\"id\":\"" + rent + "\"}");
+        assertThat(kimsStream.getResponse().getContentAsString()).doesNotContain("event:change");
     }
 
     private ResultActions createBill(String email, String household, String name, double amount) throws Exception {

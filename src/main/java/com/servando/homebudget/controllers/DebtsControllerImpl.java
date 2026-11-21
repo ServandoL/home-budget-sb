@@ -1,6 +1,8 @@
 package com.servando.homebudget.controllers;
 
 import com.home.household.CurrentMember;
+import com.home.household.HouseholdEvent.Action;
+import com.home.household.HouseholdEvents;
 import com.servando.homebudget.models.database.DebtsModel;
 import com.servando.homebudget.models.dto.CreateDebtDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
@@ -21,6 +23,9 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
     @Autowired
     private DebtsServiceImpl debtsService;
 
+    @Autowired
+    private HouseholdEvents events;
+
     @Override
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<DebtsModel>>> getAll(CurrentMember member) {
@@ -32,6 +37,8 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
     @PostMapping
     public ResponseEntity<GenericResponseDto<DebtsModel>> create(CurrentMember member, @RequestBody @Valid CreateDebtDto toCreate) {
         var response = debtsService.createDebt(member.householdId(), toCreate);
+        // After the service's @CacheEvict, so other devices refetch fresh data.
+        events.publish(member, "debts", Action.CREATED, response.data().getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -39,6 +46,7 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
     @PutMapping("/{id}")
     public ResponseEntity<GenericResponseDto<DebtsModel>> update(CurrentMember member, @PathVariable @Valid String id, @RequestBody @Valid UpdateDebtDto toUpdate) {
         var response = debtsService.updateDebt(member.householdId(), id, toUpdate);
+        events.publish(member, "debts", Action.UPDATED, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -46,6 +54,7 @@ public class DebtsControllerImpl implements CrudController<DebtsModel, CreateDeb
     @DeleteMapping("/{id}")
     public ResponseEntity<GenericResponseDto<String>> delete(CurrentMember member, @PathVariable @Valid String id) {
         var result = debtsService.delete(member.householdId(), id);
+        events.publish(member, "debts", Action.DELETED, id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

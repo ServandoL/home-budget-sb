@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.home:home-household-spring:0.2.0")
+    implementation("com.home:home-household-spring:0.3.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
     implementation "org.springframework.boot:spring-boot-starter-cache"
     implementation 'org.springframework.boot:spring-boot-starter-validation'

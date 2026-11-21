@@ -1,6 +1,8 @@
 package com.servando.homebudget.controllers;
 
 import com.home.household.CurrentMember;
+import com.home.household.HouseholdEvent.Action;
+import com.home.household.HouseholdEvents;
 import com.servando.homebudget.models.database.IncomesModel;
 import com.servando.homebudget.models.dto.*;
 import com.servando.homebudget.services.IncomeServiceImpl;
@@ -19,6 +21,9 @@ public class IncomesControllerImpl implements CrudController<IncomesModel, Creat
     @Autowired
     private IncomeServiceImpl incomeService;
 
+    @Autowired
+    private HouseholdEvents events;
+
     @GetMapping
     public ResponseEntity<GenericResponseDto<List<IncomesModel>>> getAll(CurrentMember member) {
         var results = incomeService.findAll(member.householdId());
@@ -28,18 +33,22 @@ public class IncomesControllerImpl implements CrudController<IncomesModel, Creat
     @PostMapping
     public ResponseEntity<GenericResponseDto<IncomesModel>> create(CurrentMember member, @RequestBody @Valid CreateIncomeRequestDto toCreate) {
         var response = incomeService.createIncome(member.householdId(), toCreate);
+        // After the service's @CacheEvict, so other devices refetch fresh data.
+        events.publish(member, "incomes", Action.CREATED, response.data().getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<GenericResponseDto<IncomesModel>> update(CurrentMember member, @PathVariable @Valid String id, @RequestBody @Valid UpdateIncomeRequestDto toUpdate) {
         var response = incomeService.updateIncome(member.householdId(), id, toUpdate);
+        events.publish(member, "incomes", Action.UPDATED, id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<GenericResponseDto<String>> delete(CurrentMember member, @PathVariable @Valid String id) {
         var result = incomeService.delete(member.householdId(), id);
+        events.publish(member, "incomes", Action.DELETED, id);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
