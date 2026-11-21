@@ -2,6 +2,7 @@ package com.servando.homebudget.controllers;
 
 import com.home.household.CurrentMember;
 import com.servando.homebudget.models.dto.DashboardDto;
+import com.servando.homebudget.services.BudgetSettingsService;
 import com.servando.homebudget.services.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +17,22 @@ public class DashboardController {
     @Autowired
     private DashboardService dashboardService;
 
+    @Autowired
+    private BudgetSettingsService budgetSettings;
+
     @GetMapping
     public ResponseEntity<DashboardDto> dashboard(
             CurrentMember member,
             @RequestParam(required = false) Double targetMonthlyTransfer,
-            @RequestParam(defaultValue = "0") Double payPeriodBuffer
+            @RequestParam(required = false) Double payPeriodBuffer
     ) {
+        // The household's saved settings. A page from before they moved here still sends its
+        // browser's own values; those win until phase 3 of the plan removes the parameters.
+        if (payPeriodBuffer == null) {
+            var saved = budgetSettings.get(member.householdId());
+            targetMonthlyTransfer = saved.targetMonthlyTransfer();
+            payPeriodBuffer = saved.payPeriodBuffer();
+        }
         var result = dashboardService.getDashboard(member.householdId(), targetMonthlyTransfer, payPeriodBuffer);
         return ResponseEntity.ok(result);
     }

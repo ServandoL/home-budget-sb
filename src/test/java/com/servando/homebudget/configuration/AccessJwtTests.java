@@ -37,6 +37,8 @@ import com.home.household.CurrentMember;
 import com.home.household.HouseholdFilter;
 import com.home.household.HouseholdMemberships;
 import com.servando.homebudget.services.BillsServiceImpl;
+import com.servando.homebudget.models.dto.BudgetSettingsDto;
+import com.servando.homebudget.services.BudgetSettingsService;
 import com.servando.homebudget.services.DashboardService;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -78,12 +80,17 @@ class AccessJwtTests {
     @MockitoBean
     private DashboardService dashboardService;
 
+    /** The dashboard reads the household's settings; the defaults will do here. */
+    @MockitoBean
+    private BudgetSettingsService budgetSettings;
+
     /** Every signed-in email belongs to the household, so only the security checks decide. */
     @MockitoBean
     private HouseholdMemberships memberships;
 
     @BeforeEach
     void everyoneIsAMember() {
+        when(budgetSettings.get(anyString())).thenReturn(new BudgetSettingsDto(null, 100.0, true, null, null));
         when(memberships.find(anyString(), anyString())).thenAnswer(
                 call -> Optional.of(new CurrentMember(call.getArgument(0), call.getArgument(1), CurrentMember.Role.MEMBER)));
     }

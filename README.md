@@ -39,8 +39,13 @@ controllers a `CurrentMember`: `428` without the header, `403` for a household t
 - Names are unique per household: a unique `(householdId, nameIndex)` index on every collection,
   created at startup (`app.mongo.create-indexes`, on by default). See Encryption.
 - Caches are keyed by household.
-- `BudgetPurger` deletes a household's records 30 days after it's deleted in Home.
-- `HouseholdScopingTests` checks all of that against MongoDB in Testcontainers (needs Docker).
+- The planning settings (target monthly transfer, pay period buffer) are one `BudgetSettings`
+  record per household, at `/api/v1/settings` (GET, PUT, DELETE to reset), with both amounts
+  encrypted. Until a household saves its own: a calculated target and a $100 buffer. The dashboard
+  uses them unless a request sends `payPeriodBuffer`, which only pages from before the move do.
+  `EncryptingMongoListener` covers every entity, so the settings' `@Encrypted` amounts are too.
+- `BudgetPurger` deletes a household's records, and its settings, 30 days after it's deleted in Home.
+- `HouseholdScopingTests` and `BudgetSettingsTests` check all of that against MongoDB in Testcontainers (needs Docker).
 - `scripts/backfill-household.js` gave the records from before households to "My household".
 
 ## Encryption

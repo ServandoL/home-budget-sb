@@ -3,6 +3,7 @@ package com.servando.homebudget.configuration;
 import com.mongodb.client.MongoClient;
 import com.servando.homebudget.encryption.EncryptingMongoListener;
 import com.servando.homebudget.encryption.EncryptionMigration;
+import com.servando.homebudget.models.database.BudgetSettingsModel;
 import com.servando.homebudget.models.database.BillsModel;
 import com.servando.homebudget.models.database.CreditCardsModel;
 import com.servando.homebudget.models.database.DebtsModel;
@@ -79,6 +80,9 @@ public class MongoConfiguration {
                         .unique()
                         .named(NAME_INDEX));
             }
+            mongo.indexOps(BudgetSettingsModel.class).createIndex(new Index().on("householdId", Sort.Direction.ASC)
+                    .unique()
+                    .named("householdId_unique"));
         };
     }
 }

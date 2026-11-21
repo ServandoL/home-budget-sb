@@ -22,10 +22,12 @@ public class BudgetPurger implements HouseholdDataPurger {
 
     private final MongoTemplate mongo;
     private final CacheManager caches;
+    private final BudgetSettingsService settings;
 
-    public BudgetPurger(MongoTemplate mongo, CacheManager caches) {
+    public BudgetPurger(MongoTemplate mongo, CacheManager caches, BudgetSettingsService settings) {
         this.mongo = mongo;
         this.caches = caches;
+        this.settings = settings;
     }
 
     @Override
@@ -35,6 +37,8 @@ public class BudgetPurger implements HouseholdDataPurger {
             deleted += mongo.remove(query(where("householdId").is(new ObjectId(householdId))), model)
                     .getDeletedCount();
         }
+        // The settings record isn't one of MODELS: it has no name or billing cycle.
+        deleted += settings.reset(householdId);
         for (String name : caches.getCacheNames()) {
             Cache cache = caches.getCache(name);
             if (cache != null) {

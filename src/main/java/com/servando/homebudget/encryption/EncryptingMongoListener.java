@@ -1,6 +1,5 @@
 package com.servando.homebudget.encryption;
 
-import com.servando.homebudget.models.database.SharedProperties;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -16,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Encrypts each record's {@link Encrypted} fields as it's written and decrypts them as it's read,
+ * for every entity, the budget records and the household's settings alike,
  * so the rest of the API only ever sees plain values. Works on the BSON document between the
  * entity and MongoDB, which covers every repository save and find.
  *
@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * from before encryption still load until the startup migration rewrites them.
  */
 @Component
-public class EncryptingMongoListener extends AbstractMongoEventListener<SharedProperties> {
+public class EncryptingMongoListener extends AbstractMongoEventListener<Object> {
 
     public static final String NAME_INDEX = "nameIndex";
 
@@ -36,7 +36,7 @@ public class EncryptingMongoListener extends AbstractMongoEventListener<SharedPr
     }
 
     @Override
-    public void onBeforeSave(BeforeSaveEvent<SharedProperties> event) {
+    public void onBeforeSave(BeforeSaveEvent<Object> event) {
         Document document = event.getDocument();
         if (document == null) {
             return;
@@ -57,7 +57,7 @@ public class EncryptingMongoListener extends AbstractMongoEventListener<SharedPr
     }
 
     @Override
-    public void onAfterLoad(AfterLoadEvent<SharedProperties> event) {
+    public void onAfterLoad(AfterLoadEvent<Object> event) {
         Document document = event.getDocument();
         if (document != null) {
             cipher.decryptDocument(document, event.getCollectionName());
