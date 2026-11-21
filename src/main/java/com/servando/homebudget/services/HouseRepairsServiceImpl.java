@@ -1,5 +1,6 @@
 package com.servando.homebudget.services;
 
+import com.servando.homebudget.encryption.FieldCipher;
 import com.servando.homebudget.models.database.HouseRepairsModel;
 import com.servando.homebudget.models.dto.CreateHouseRepairsDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
@@ -16,8 +17,8 @@ import java.util.List;
 
 @Service
 public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsModel, HouseRepairsRepository, CreateHouseRepairsDto, UpdateHouseRepairsDto> {
-    protected HouseRepairsServiceImpl(HouseRepairsRepository repository) {
-        super(repository);
+    protected HouseRepairsServiceImpl(HouseRepairsRepository repository, FieldCipher cipher) {
+        super(repository, cipher);
     }
 
     @Cacheable(cacheNames = "house-repairs", key = "#householdId")

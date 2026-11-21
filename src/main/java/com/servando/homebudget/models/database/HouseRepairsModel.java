@@ -1,5 +1,6 @@
 package com.servando.homebudget.models.database;
 
+import com.servando.homebudget.encryption.Encrypted;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,9 +14,11 @@ import java.time.Instant;
 @Getter
 @Setter
 public class HouseRepairsModel extends SharedProperties {
+    @Encrypted
     @NotBlank
     @NotNull
     String description;
+    @Encrypted
     @NotBlank
     @NotNull
     String category;
@@ -23,8 +26,10 @@ public class HouseRepairsModel extends SharedProperties {
     Integer priority;
     @NotNull
     HouseRepairsStatus status;
+    @Encrypted
     @Nullable
     Integer cost;
+    @Encrypted
     @Nullable
     String notes;
     @Nullable

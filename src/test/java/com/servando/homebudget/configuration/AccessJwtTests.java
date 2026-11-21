@@ -51,7 +51,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * services are mocked, so no database is needed.
  */
 @SpringBootTest(properties = {"MONGO_APP_URL=mongodb://localhost:1/test", "MONGO_DATABASE=test", "SERVER_PORT=0",
-        "app.mongo.create-indexes=false"})
+        "app.mongo.create-indexes=false",
+        "budget.encryption-key=ZXnlYD1EWjdZQXlQFHCfLkBP6dBJmAlXrGNLTzdRTGg="})
 @AutoConfigureMockMvc
 class AccessJwtTests {
 

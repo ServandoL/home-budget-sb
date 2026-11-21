@@ -1,6 +1,8 @@
 package com.servando.homebudget.configuration;
 
 import com.mongodb.client.MongoClient;
+import com.servando.homebudget.encryption.EncryptingMongoListener;
+import com.servando.homebudget.encryption.EncryptionMigration;
 import com.servando.homebudget.models.database.BillsModel;
 import com.servando.homebudget.models.database.CreditCardsModel;
 import com.servando.homebudget.models.database.DebtsModel;
@@ -51,21 +53,31 @@ public class MongoConfiguration {
             CreditCardsModel.class, DebtsModel.class, HouseRepairsModel.class, IncomesModel.class,
             SubscriptionsModel.class);
 
+    static final String OLD_NAME_INDEX = "householdId_name_unique";
+    static final String NAME_INDEX = "householdId_nameIndex_unique";
+
     /**
-     * Names are unique within a household. Created at startup rather than through auto-index
-     * creation (which is off), so an index that can't be built stops the deploy loudly. A record
-     * without a householdId counts as householdId null, so backfill before deploying. Tests without
-     * a database turn it off with app.mongo.create-indexes=false.
+     * At startup: first encrypt the records saved before encryption, which gives each one a
+     * nameIndex; then make names unique within a household on that hash (the names themselves
+     * are encrypted, so an index on them can't compare). Not through auto-index creation (which is
+     * off), so an index that can't be built stops the deploy loudly. A record without a householdId
+     * counts as householdId null, so backfill before deploying. Tests without a database turn it
+     * off with app.mongo.create-indexes=false.
      */
     @Bean
     @ConditionalOnProperty(name = "app.mongo.create-indexes", matchIfMissing = true)
     SmartInitializingSingleton indexInitializer(MongoTemplate mongo) {
         return () -> {
+            EncryptionMigration.run(mongo, MODELS);
             for (Class<? extends SharedProperties> model : MODELS) {
-                mongo.indexOps(model).createIndex(new Index().on("householdId", Sort.Direction.ASC)
-                        .on("name", Sort.Direction.ASC)
+                var indexes = mongo.indexOps(model);
+                if (indexes.getIndexInfo().stream().anyMatch(i -> i.getName().equals(OLD_NAME_INDEX))) {
+                    indexes.dropIndex(OLD_NAME_INDEX);
+                }
+                indexes.createIndex(new Index().on("householdId", Sort.Direction.ASC)
+                        .on(EncryptingMongoListener.NAME_INDEX, Sort.Direction.ASC)
                         .unique()
-                        .named("householdId_name_unique"));
+                        .named(NAME_INDEX));
             }
         };
     }

@@ -1,26 +1,25 @@
 package com.servando.homebudget.services;
 
+import com.servando.homebudget.encryption.FieldCipher;
 import com.servando.homebudget.models.database.IncomesModel;
 import com.servando.homebudget.models.dto.*;
 import com.servando.homebudget.repository.IncomesRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class IncomeServiceImpl extends BaseCrudServiceImpl<IncomesModel, IncomesRepository, CreateIncomeRequestDto, UpdateIncomeRequestDto> {
-    IncomeServiceImpl(IncomesRepository repository) {
-        super(repository);
+    IncomeServiceImpl(IncomesRepository repository, FieldCipher cipher) {
+        super(repository, cipher);
     }
 
     @Cacheable(cacheNames = "incomes", key = "#householdId")
     public GenericResponseDto<List<IncomesModel>> findAll(String householdId) {
-        var sort = Sort.by(Sort.Direction.DESC, "netAmount");
-        return this.getAll(householdId, sort);
+        return this.getAll(householdId, largestFirst(IncomesModel::getNetAmount));
     }
 
     @CacheEvict(cacheNames = "incomes", key = "#householdId")

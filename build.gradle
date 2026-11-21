@@ -50,6 +50,15 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// Prints budget records decrypted, for debugging: ./gradlew inspect --args="Bills <householdId> [name]".
+// Reads MONGO_APP_URL, MONGO_DATABASE and BUDGET_ENCRYPTION_KEY from the environment.
+tasks.register('inspect', JavaExec) {
+    group = 'help'
+    description = 'Prints budget records decrypted.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.servando.homebudget.tools.BudgetInspect'
+}
+
 test {
     useJUnitPlatform()
     jvmArgs "-javaagent:${configurations.testRuntimeClasspath.find { it.name.contains('mockito-core') }.absolutePath}"

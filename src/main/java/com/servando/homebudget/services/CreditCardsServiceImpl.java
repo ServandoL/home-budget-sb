@@ -1,5 +1,6 @@
 package com.servando.homebudget.services;
 
+import com.servando.homebudget.encryption.FieldCipher;
 import com.servando.homebudget.models.database.CreditCardsModel;
 import com.servando.homebudget.models.dto.CreateCreditCardsRequestDto;
 import com.servando.homebudget.models.dto.GenericResponseDto;
@@ -8,21 +9,19 @@ import com.servando.homebudget.repository.CreditCardsRepository;
 import com.servando.homebudget.utils.ResolveValueFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class CreditCardsServiceImpl extends BaseCrudServiceImpl<CreditCardsModel, CreditCardsRepository, CreateCreditCardsRequestDto, UpdateCreditCardsRequestDto> {
-    CreditCardsServiceImpl(CreditCardsRepository repository) {
-        super(repository);
+    CreditCardsServiceImpl(CreditCardsRepository repository, FieldCipher cipher) {
+        super(repository, cipher);
     }
 
     @Cacheable(cacheNames = "credit-cards", key = "#householdId")
     public GenericResponseDto<List<CreditCardsModel>> findAll(String householdId) {
-        var sort = Sort.by(Sort.Direction.DESC, "currentBalance");
-        return this.getAll(householdId, sort);
+        return this.getAll(householdId, largestFirst(CreditCardsModel::getCurrentBalance));
     }
 
     @CacheEvict(cacheNames = "credit-cards", key = "#householdId")

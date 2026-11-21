@@ -36,12 +36,45 @@ controllers a `CurrentMember`: `428` without the header, `403` for a household t
 
 - `BaseCrudRepository` extends `Repository`, not `MongoRepository`, and every method takes the
   household, so an unscoped query doesn't compile.
-- Names are unique per household: a unique `(householdId, name)` index on every collection, created
-  at startup (`app.mongo.create-indexes`, on by default).
+- Names are unique per household: a unique `(householdId, nameIndex)` index on every collection,
+  created at startup (`app.mongo.create-indexes`, on by default). See Encryption.
 - Caches are keyed by household.
 - `BudgetPurger` deletes a household's records 30 days after it's deleted in Home.
 - `HouseholdScopingTests` checks all of that against MongoDB in Testcontainers (needs Docker).
 - `scripts/backfill-household.js` gave the records from before households to "My household".
+
+## Encryption
+Names, amounts, balances, APRs, costs, descriptions and notes are stored encrypted (AES-256-GCM), so
+someone reading the database sees `Binary.createFromBase64(…, 128)` instead of `Rent: 1500`. The API
+encrypts on save and decrypts on read; everything above the repositories sees plain values.
+
+- A field marked `@Encrypted` is encrypted by `EncryptingMongoListener`. Ids, households, dates, due
+  days, enums, priorities and status stay plain, so they can still be queried.
+- MongoDB can't filter or sort an encrypted field: sort in Java (`BaseCrudServiceImpl.getAll` with a
+  `Comparator`), as bills, credit cards, debts and incomes do.
+- Names are found and kept unique through `nameIndex`, a keyed hash of household and name, with a
+  unique `(householdId, nameIndex)` index.
+- At startup, records saved before encryption are encrypted (`EncryptionMigration`), before the
+  index is built.
+- The key is `BUDGET_ENCRYPTION_KEY`: 32 random bytes in base64 (`openssl rand -base64 32`). The API
+  won't start without it. **Without the key the data can't be recovered**, from the database or the
+  backups, so keep a copy somewhere other than the server.
+
+### Debugging encrypted records
+`BudgetInspect` prints records decrypted. It only reads. Give it a collection, and optionally a
+household and an exact name:
+
+```bash
+# Inside the running container, which already has the key and connection string:
+docker exec backend-home-budget java -Dloader.main=com.servando.homebudget.tools.BudgetInspect \
+  -cp /app/app.jar org.springframework.boot.loader.launch.PropertiesLauncher Bills <householdId> [name]
+
+# From a checkout, with MONGO_APP_URL, MONGO_DATABASE and BUDGET_ENCRYPTION_KEY set:
+./gradlew -q inspect --args="Bills <householdId> [name]"
+```
+
+In Atlas or mongosh, filter on the plain fields (`householdId`, `_id`, dates, `billingCycle`, …), then
+read that household's records with `BudgetInspect`.
 
 Locally, the `local` profile signs every request in as `LOCAL_MEMBER_EMAIL` (default
 `dev@example.com`), who needs a household in a local household-api like anyone else.
@@ -57,5 +90,5 @@ Locally, the `local` profile signs every request in as `LOCAL_MEMBER_EMAIL` (def
 ## Configuration
 Environment variables (see the Dockerfile for defaults): `MONGO_APP_URL`,
 `MONGO_DATABASE`, `CORS_ORIGINS`, `SERVER_PORT` (default 9003), `HOUSEHOLD_DATABASE` (default
-`HOUSEHOLD`), and `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` for Cloudflare Access (not needed with the
+`HOUSEHOLD`), `BUDGET_ENCRYPTION_KEY` (required; the `local` profile has a dev key), and `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` for Cloudflare Access (not needed with the
 `local` profile).

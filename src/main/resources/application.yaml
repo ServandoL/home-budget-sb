@@ -18,6 +18,11 @@ access:
   team-domain: ${ACCESS_TEAM_DOMAIN:}
   aud: ${ACCESS_AUD:}
 
+# Names, amounts and notes are stored encrypted with this key: 32 random bytes in base64
+# (openssl rand -base64 32). Startup fails without it. Losing it loses the data, so keep a copy.
+budget:
+  encryption-key: ${BUDGET_ENCRYPTION_KEY:}
+
 app:
   cors:
     allowed-origins:

@@ -18,7 +18,8 @@ public interface BaseCrudRepository<TModel> extends Repository<TModel, String> {
 
     Optional<TModel> findByIdAndHouseholdId(String id, String householdId);
 
-    Optional<TModel> findByHouseholdIdAndName(String householdId, String name);
+    /** Names are stored encrypted; find one by FieldCipher.nameIndex(householdId, name). */
+    Optional<TModel> findByHouseholdIdAndNameIndex(String householdId, byte[] nameIndex);
 
     <S extends TModel> S save(S model);
 

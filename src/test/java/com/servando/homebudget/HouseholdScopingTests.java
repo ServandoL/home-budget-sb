@@ -2,7 +2,11 @@ package com.servando.homebudget;
 
 import com.home.household.HouseholdFilter;
 import com.mongodb.client.MongoClient;
+import com.servando.homebudget.configuration.MongoConfiguration;
+import com.servando.homebudget.encryption.EncryptionMigration;
+import com.servando.homebudget.encryption.FieldCipher;
 import com.servando.homebudget.models.database.BillsModel;
+import org.bson.types.Binary;
 import com.servando.homebudget.services.BudgetPurger;
 import com.jayway.jsonpath.JsonPath;
 import org.bson.Document;
@@ -45,7 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * the cache and the dashboard never mix them.
  */
 @SpringBootTest(properties = {"MONGO_DATABASE=BUDGET", "SERVER_PORT=0", "household.database=HOUSEHOLD",
-        "access.team-domain=test.cloudflareaccess.com", "access.aud=test-aud"})
+        "access.team-domain=test.cloudflareaccess.com", "access.aud=test-aud",
+        "budget.encryption-key=" + HouseholdScopingTests.KEY})
 @AutoConfigureMockMvc
 @Testcontainers
 class HouseholdScopingTests {
@@ -59,6 +64,7 @@ class HouseholdScopingTests {
         registry.add("MONGO_APP_URL", MONGO::getConnectionString);
     }
 
+    static final String KEY = "ZXnlYD1EWjdZQXlQFHCfLkBP6dBJmAlXrGNLTzdRTGg=";
     static final String SAM = "sam@example.com";
     static final String KIM = "kim@example.com";
 
@@ -103,7 +109,7 @@ class HouseholdScopingTests {
         bills(KIM, kimHome).andExpect(jsonPath("$.data[*].name", contains("Power")));
         bills(SAM, samHome).andExpect(jsonPath("$.data[*].name", contains("Rent")));
 
-        Document stored = mongo.getCollection("Bills").find(new Document("name", "Rent")).first();
+        Document stored = mongo.getCollection("Bills").find().first();
         assertThat(stored.getObjectId("householdId")).isEqualTo(new ObjectId(samHome));
     }
 
@@ -114,7 +120,46 @@ class HouseholdScopingTests {
         createBill(SAM, samHome, "Rent", 1).andExpect(status().isConflict());
 
         List<String> indexes = mongo.indexOps(BillsModel.class).getIndexInfo().stream().map(i -> i.getName()).toList();
-        assertThat(indexes).contains("householdId_name_unique");
+        assertThat(indexes).contains("householdId_nameIndex_unique").doesNotContain("householdId_name_unique");
+    }
+
+    @Test
+    void namesAndAmountsAreUnreadableInTheDatabase() throws Exception {
+        createBill(SAM, samHome, "Rent", 1500).andExpect(status().isCreated());
+        createBill(SAM, samHome, "Power", 90).andExpect(status().isCreated());
+        createBill(SAM, samHome, "Mortgage", 2100).andExpect(status().isCreated());
+
+        Document stored = mongo.getCollection("Bills").find(new Document("householdId", new ObjectId(samHome))).first();
+        assertThat(stored.get("name")).isInstanceOf(Binary.class);
+        assertThat(((Binary) stored.get("name")).getType()).isEqualTo(FieldCipher.SUBTYPE);
+        assertThat(stored.get("amount")).isInstanceOf(Binary.class);
+        assertThat(stored.getString("billingCycle")).isNotNull(); // not sensitive, so still queryable
+        String everything = mongo.getCollection("Bills").find().into(new java.util.ArrayList<>()).toString();
+        assertThat(everything).doesNotContain("Rent", "Power", "Mortgage", "1500", "2100");
+
+        // MongoDB can't sort ciphertext, so the API sorts in Java: largest first, as before.
+        bills(SAM, samHome).andExpect(jsonPath("$.data[*].name", contains("Mortgage", "Rent", "Power")))
+                .andExpect(jsonPath("$.data[0].amount").value(2100.0))
+                .andExpect(jsonPath("$.data[0].nameIndex").doesNotExist());
+    }
+
+    @Test
+    void recordsFromBeforeEncryptionAreEncryptedAtStartup() throws Exception {
+        String id = new ObjectId().toHexString();
+        mongo.getCollection("Bills").insertOne(new Document("_id", new ObjectId(id))
+                .append("householdId", new ObjectId(samHome)).append("name", "Rent").append("amount", 1500.0)
+                .append("category", "RENT").append("billingCycle", "MONTHLY"));
+
+        assertThat(EncryptionMigration.run(mongo, MongoConfiguration.MODELS)).isEqualTo(1);
+        assertThat(EncryptionMigration.run(mongo, MongoConfiguration.MODELS)).isZero();
+
+        Document stored = mongo.getCollection("Bills").find(new Document("_id", new ObjectId(id))).first();
+        assertThat(stored.get("name")).isInstanceOf(Binary.class);
+        assertThat(stored.get("amount")).isInstanceOf(Binary.class);
+        bills(SAM, samHome).andExpect(jsonPath("$.data[*].name", contains("Rent")))
+                .andExpect(jsonPath("$.data[0].amount").value(1500.0));
+        // It has a nameIndex now, so the name is still taken.
+        createBill(SAM, samHome, "Rent", 1).andExpect(status().isConflict());
     }
 
     @Test

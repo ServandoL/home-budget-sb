@@ -1,5 +1,6 @@
 package com.servando.homebudget.models.database;
 
+import com.servando.homebudget.encryption.Encrypted;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +18,7 @@ import java.time.Instant;
 @Getter
 @Setter
 public class BillsModel extends SharedProperties {
+    @Encrypted
     @NotNull
     Double amount;
     @Nullable

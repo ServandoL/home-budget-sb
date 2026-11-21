@@ -1,5 +1,6 @@
 package com.servando.homebudget.services;
 
+import com.servando.homebudget.encryption.FieldCipher;
 import com.servando.homebudget.models.database.SubscriptionsModel;
 import com.servando.homebudget.models.dto.*;
 import com.servando.homebudget.repository.SubscriptionsRepository;
@@ -13,8 +14,8 @@ import java.util.List;
 
 @Service
 public class SubscriptionsServiceImpl extends BaseCrudServiceImpl<SubscriptionsModel, SubscriptionsRepository, CreateSubscriptionsRequestDto, UpdateSubscriptionsRequestDto> {
-    SubscriptionsServiceImpl(SubscriptionsRepository repository) {
-        super(repository);
+    SubscriptionsServiceImpl(SubscriptionsRepository repository, FieldCipher cipher) {
+        super(repository, cipher);
     }
 
     @Cacheable(cacheNames = "subscriptions", key = "#householdId")

@@ -1,5 +1,6 @@
 package com.servando.homebudget.models.database;
 
+import com.servando.homebudget.encryption.Encrypted;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -20,14 +21,21 @@ public class SharedProperties {
     String id;
     /**
      * The household that owns the record, stored as an ObjectId. Names are unique per household:
-     * MongoConfiguration creates a unique (householdId, name) index on every collection.
+     * MongoConfiguration creates a unique (householdId, nameIndex) index on every collection.
      */
     @JsonIgnore
     @Field(targetType = FieldType.OBJECT_ID)
     String householdId;
+    @Encrypted
     @NotBlank
     @NotNull
     String name;
+    /**
+     * A keyed hash of the name within the household, set by EncryptingMongoListener on every save.
+     * The name is stored encrypted, so lookups by name and the unique index use this instead.
+     */
+    @JsonIgnore
+    byte[] nameIndex;
     @NotNull
     BillingCycle billingCycle;
     @Nullable

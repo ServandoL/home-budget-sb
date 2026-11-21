@@ -3,6 +3,10 @@
 local:
   member-email: ${LOCAL_MEMBER_EMAIL:dev@example.com}
 
+# A fixed key for local data only; it's in the repo, so it protects nothing.
+budget:
+  encryption-key: ${BUDGET_ENCRYPTION_KEY:k11JNNgX/ifxfaTVLv3V8m+7n8cAXtC69ABXMn+IjeI=}
+
 # Local development only: TRACE puts request details in the logs.
 logging:
   level:

@@ -1,5 +1,6 @@
 package com.servando.homebudget.models.database;
 
+import com.servando.homebudget.encryption.Encrypted;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,10 +16,13 @@ import java.time.Instant;
 @Getter
 @Setter
 public class CreditCardsModel extends SharedProperties {
+    @Encrypted
     @Nullable
     Double currentBalance;
+    @Encrypted
     @Nullable
     Double minimumPayment;
+    @Encrypted
     @Nullable
     Double apr;
     @Nullable
