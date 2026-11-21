@@ -61,6 +61,46 @@ public class DashboardServiceTest {
     }
 
     @Test
+    void getDashboard_countsMonthlyPayTwelveTimesAYear() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new IncomesModel("Salary", BillingCycle.MONTHLY, PayFrequency.MONTHLY, 4000.0)
+        ));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 2000.0, BillCategory.RENT, BillingCycle.MONTHLY, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, 1000.0, 100.0);
+
+        // One paycheck a month: the month's figures are the paycheck's.
+        assertEquals(4000.0, result.getMonthlyIncome(), 1e-9);
+        assertEquals(1100.0, result.getRecommendedTransfer(), 1e-9);
+        assertEquals(1900.0, result.getSpendableMonthly(), 1e-9);
+        assertEquals(1900.0, result.getSpendablePerPaycheck(), 1e-9);
+        assertEquals(PayFrequency.MONTHLY, result.getFrequency());
+    }
+
+    @Test
+    void getDashboard_addsMonthlyPayToAnotherSchedule() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new IncomesModel("Salary", BillingCycle.MONTHLY, PayFrequency.MONTHLY, 3000.0),
+                new IncomesModel("Wages", BillingCycle.MONTHLY, PayFrequency.BI_WEEKLY, 1200.0)
+        ));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, 0.0, 0.0);
+
+        // $3,000 once a month plus $1,200 26 times a year; "payday" is the more frequent schedule.
+        assertEquals(3000.0 + 1200.0 * 26 / 12, result.getMonthlyIncome(), 1e-9);
+        assertEquals(PayFrequency.BI_WEEKLY, result.getFrequency());
+    }
+
+    @Test
     void getDashboard_returnsZeroSpendableWhenNoIncome() {
         when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
         when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());

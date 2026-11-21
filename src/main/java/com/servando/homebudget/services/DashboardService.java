@@ -185,10 +185,12 @@ public class DashboardService {
     private Double getFrequency(PayFrequency freq) {
         double biweeklyFrequency = 26.0;
         double semimonthlyFrequency = 24.0;
+        // Every value named, no default: a new frequency must be counted here, not as twice a month.
         return switch (freq) {
             case WEEKLY -> WEEKS_PER_YEAR;
             case BI_WEEKLY -> biweeklyFrequency;
-            default -> semimonthlyFrequency;
+            case SEMI_MONTHLY -> semimonthlyFrequency;
+            case MONTHLY -> MONTHS_PER_YEAR;
         };
     }
 

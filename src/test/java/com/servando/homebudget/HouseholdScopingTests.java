@@ -186,6 +186,20 @@ class HouseholdScopingTests {
     }
 
     @Test
+    void anIncomeNeedsAPayFrequencyAndCanBeMonthly() throws Exception {
+        mvc.perform(json(post("/api/v1/incomes"), "{\"name\":\"Salary\",\"netAmount\":4000,\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        mvc.perform(json(post("/api/v1/incomes"),
+                        "{\"name\":\"Salary\",\"netAmount\":4000,\"frequency\":\"monthly\",\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.frequency").value("monthly"));
+        mvc.perform(get("/api/v1/dashboard").with(as(SAM, samHome)))
+                .andExpect(jsonPath("$.monthlyIncome").value(4000.0))
+                .andExpect(jsonPath("$.frequency").value("monthly"));
+    }
+
+    @Test
     void someoneOutsideTheHouseholdIsRefused() throws Exception {
         bills(KIM, samHome).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/bills").with(jwt().jwt(j -> j.claim("email", SAM)))).andExpect(status().is(428));

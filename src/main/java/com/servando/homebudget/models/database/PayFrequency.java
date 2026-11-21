@@ -6,7 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum PayFrequency {
     WEEKLY("weekly"),
     BI_WEEKLY("biweekly"),
-    SEMI_MONTHLY("semimonthly");
+    SEMI_MONTHLY("semimonthly"),
+    MONTHLY("monthly");
 
     private final String value;
 
