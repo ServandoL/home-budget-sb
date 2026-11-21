@@ -56,4 +56,6 @@ Locally, the `local` profile signs every request in as `LOCAL_MEMBER_EMAIL` (def
 
 ## Configuration
 Environment variables (see the Dockerfile for defaults): `MONGO_APP_URL`,
-`MONGO_DATABASE`, `CORS_ORIGINS`, `SERVER_PORT` (default 9003).
+`MONGO_DATABASE`, `CORS_ORIGINS`, `SERVER_PORT` (default 9003), `HOUSEHOLD_DATABASE` (default
+`HOUSEHOLD`), and `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` for Cloudflare Access (not needed with the
+`local` profile).
