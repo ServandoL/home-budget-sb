@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequestMapping("/api/v1/dashboard")
@@ -21,19 +20,11 @@ public class DashboardController {
     private BudgetSettingsService budgetSettings;
 
     @GetMapping
-    public ResponseEntity<DashboardDto> dashboard(
-            CurrentMember member,
-            @RequestParam(required = false) Double targetMonthlyTransfer,
-            @RequestParam(required = false) Double payPeriodBuffer
-    ) {
-        // The household's saved settings. A page from before they moved here still sends its
-        // browser's own values; those win until phase 3 of the plan removes the parameters.
-        if (payPeriodBuffer == null) {
-            var saved = budgetSettings.get(member.householdId());
-            targetMonthlyTransfer = saved.targetMonthlyTransfer();
-            payPeriodBuffer = saved.payPeriodBuffer();
-        }
-        var result = dashboardService.getDashboard(member.householdId(), targetMonthlyTransfer, payPeriodBuffer);
+    public ResponseEntity<DashboardDto> dashboard(CurrentMember member) {
+        // The household's saved settings, the same on every device.
+        var settings = budgetSettings.get(member.householdId());
+        var result = dashboardService.getDashboard(member.householdId(), settings.targetMonthlyTransfer(),
+                settings.payPeriodBuffer());
         return ResponseEntity.ok(result);
     }
 }

@@ -142,7 +142,7 @@ class BudgetSettingsTests {
     }
 
     @Test
-    void theDashboardUsesTheSavedSettingsUnlessAnOldPageSendsItsOwn() throws Exception {
+    void theDashboardUsesTheSavedSettings() throws Exception {
         // $2,600 every two weeks: 26 paydays a year, so a monthly amount is spread over 26/12 paydays.
         mvc.perform(json(post("/api/v1/incomes"), "{\"name\":\"Pay\",\"netAmount\":2600,\"frequency\":\"biweekly\",\"billingCycle\":\"monthly\"}")
                 .with(as(SAM, samHome))).andExpect(status().isCreated());
@@ -153,9 +153,10 @@ class BudgetSettingsTests {
 
         dashboard(samHome, "").andExpect(jsonPath("$.targetMonthlyTransfer").value(1200.0))
                 .andExpect(jsonPath("$.recommendedTransfer", closeTo(perPayday + 150, 0.01)));
-        // A tab opened before the deploy still sends its browser's values, and gets them.
-        dashboard(samHome, "?targetMonthlyTransfer=1200&payPeriodBuffer=0")
-                .andExpect(jsonPath("$.recommendedTransfer", closeTo(perPayday, 0.01)));
+        // A page from before the settings moved here still sends its browser's values; they're ignored.
+        dashboard(samHome, "?targetMonthlyTransfer=500&payPeriodBuffer=0")
+                .andExpect(jsonPath("$.targetMonthlyTransfer").value(1200.0))
+                .andExpect(jsonPath("$.recommendedTransfer", closeTo(perPayday + 150, 0.01)));
     }
 
     @Test
