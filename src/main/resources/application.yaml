@@ -1,5 +1,5 @@
 server:
-  port: {SERVER_PORT}
+  port: ${SERVER_PORT:9010}
   # nginx reaches the API over plain HTTP. Read its X-Forwarded-* headers so the
   # API sees the browser's https origin; otherwise every save looks cross-origin
   # to the CORS check and gets 403.
