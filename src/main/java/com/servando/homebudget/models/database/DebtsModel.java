@@ -39,4 +39,14 @@ public class DebtsModel extends SharedProperties {
     public DebtsModel(String name, BillingCycle billingCycle ) {
         super(name, billingCycle, Instant.now());
     }
+
+    /** What's left to pay. Debts created before it was saved on create have none stored, so it's worked out. */
+    public Double getAmountOwed() {
+        return amountOwed != null ? amountOwed : owed(amount, amountPaid);
+    }
+
+    public static Double owed(Double amount, Double amountPaid) {
+        if (amount == null) return null;
+        return amountPaid == null ? amount : amount - amountPaid;
+    }
 }

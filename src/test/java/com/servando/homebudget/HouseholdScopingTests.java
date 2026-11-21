@@ -200,6 +200,43 @@ class HouseholdScopingTests {
     }
 
     @Test
+    void aNewDebtCountsTowardTheDashboardStraightAway() throws Exception {
+        mvc.perform(json(post("/api/v1/debts"), "{\"name\":\"Car\",\"billingCycle\":\"monthly\",\"amount\":1000,"
+                        + "\"amountPaid\":250,\"from\":\"Bank\",\"description\":\"Loan\",\"debtStarted\":\"2026-01-01\"}")
+                        .with(as(SAM, samHome)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.amountOwed").value(750.0));
+        mvc.perform(post("/api/v1/credit-cards").contentType(MediaType.APPLICATION_JSON)
+                        .header("Sec-Fetch-Site", "same-origin")
+                        .content("{\"name\":\"Visa\",\"billingCycle\":\"monthly\",\"currentBalance\":500}")
+                        .with(as(SAM, samHome)))
+                .andExpect(status().isCreated());
+
+        mvc.perform(get("/api/v1/dashboard").with(as(SAM, samHome)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalDebts").value(750.0))
+                .andExpect(jsonPath("$.creditCardsMonthly").value(0.0));
+    }
+
+    @Test
+    void editingARepairKeepsWhenItWasCreated() throws Exception {
+        String repair = JsonPath.read(mvc.perform(json(post("/api/v1/house-repairs"),
+                        "{\"name\":\"Roof\",\"description\":\"Leak\",\"priority\":1,\"cost\":800,"
+                                + "\"status\":\"quoted\",\"category\":\"Exterior\"}").with(as(SAM, samHome)))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.data.id");
+        String created = JsonPath.read(mvc.perform(get("/api/v1/house-repairs").with(as(SAM, samHome)))
+                .andReturn().getResponse().getContentAsString(), "$.data[0].createdAt");
+
+        Thread.sleep(5);
+        mvc.perform(json(put("/api/v1/house-repairs/" + repair), "{\"name\":\"Roof\",\"status\":\"complete\"}")
+                .with(as(SAM, samHome))).andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/house-repairs").with(as(SAM, samHome)))
+                .andExpect(jsonPath("$.data[0].status").value("complete"))
+                .andExpect(jsonPath("$.data[0].createdAt").value(created));
+    }
+
+    @Test
     void someoneOutsideTheHouseholdIsRefused() throws Exception {
         bills(KIM, samHome).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/bills").with(jwt().jwt(j -> j.claim("email", SAM)))).andExpect(status().is(428));

@@ -57,6 +57,7 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toUpdate.setNotes(ResolveValueFactory.of(request.getNotes(), other.getNotes()));
         toUpdate.setDateComplete(ResolveValueFactory.of(request.getDateCompleted(), other.getDateComplete()));
         toUpdate.setCategory(ResolveValueFactory.of(request.getCategory(), other.getCategory()));
+        toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(householdId, id, request, toUpdate);
     }
 

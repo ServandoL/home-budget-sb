@@ -52,12 +52,14 @@ public class DashboardServiceTest {
 
         var result = dashboardService.getDashboard(HOUSEHOLD, 5000.0, 100.0);
 
-        assertEquals(7949.955000000001, result.getMonthlyIncome());
-        assertEquals(4930.110000000001, result.getTotalObligations());
-        assertEquals(2407.692307692308, result.getRecommendedTransfer());
-        assertEquals(1372.4728402366866, result.getSpendablePerPaycheck());
-        assertEquals(2973.691153846154, result.getSpendableMonthly());
-        assertEquals(686.2364201183433, result.getSpendableWeekly());
+        assertEquals(7949.955, result.getMonthlyIncome(), 1e-6);
+        assertEquals(4930.11, result.getTotalObligations(), 1e-6);
+        // 5000 a month over 26/12 paychecks a month, plus the $100 buffer on each.
+        assertEquals(2407.692307692308, result.getRecommendedTransfer(), 1e-6);
+        // The $100 buffer comes out of each of 26/12 paychecks a month: 216.67 a month.
+        assertEquals(7949.955 - 4930.11 - 100.0 * 26 / 12, result.getSpendableMonthly(), 1e-6);
+        assertEquals(2803.178333333333 * 12 / 26, result.getSpendablePerPaycheck(), 1e-6);
+        assertEquals(2803.178333333333 * 12 / 52, result.getSpendableWeekly(), 1e-6);
     }
 
     @Test
@@ -143,5 +145,28 @@ public class DashboardServiceTest {
         assertEquals(PayFrequency.SEMI_MONTHLY, result.getFrequency());
         assertFalse(result.getIsOverBudget());
         assertEquals(200.0, result.getRecommendedTransfer(), 1e-9);
+        // 2000 a month in, 220 out, and the $200 buffer from each of 2 paychecks a month.
+        assertEquals(1380.0, result.getSpendableMonthly(), 1e-9);
+    }
+
+    @Test
+    void getDashboard_countsACardWithoutAMinimumAsNothingAndWorksOutWhatADebtOwes() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new CreditCardsModel("No minimum", BillingCycle.MONTHLY, null, 500.0, null, null),
+                new CreditCardsModel("CC", BillingCycle.MONTHLY, 0.0, 229.00, 1, 25.0)
+        ));
+        // Saved before amountOwed was set on create: only the amount and what's been paid.
+        var debt = new DebtsModel("Car", BillingCycle.MONTHLY);
+        debt.setAmount(1000.0);
+        debt.setAmountPaid(250.0);
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(debt));
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, null, 0.0);
+
+        assertEquals(25.0, result.getCreditCardsMonthly(), 1e-9);
+        assertEquals(750.0, result.getTotalDebts(), 1e-9);
     }
 }

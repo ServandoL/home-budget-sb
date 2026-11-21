@@ -29,6 +29,7 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         var toCreate = new DebtsModel(request.getName(), request.getBillingCycle());
         toCreate.setAmount(request.getAmount());
         toCreate.setAmountPaid(request.getAmountPaid() == null ? 0 : request.getAmountPaid());
+        toCreate.setAmountOwed(DebtsModel.owed(toCreate.getAmount(), toCreate.getAmountPaid()));
         toCreate.setDatePaid(request.getDatePaid());
         toCreate.setDebtStarted(request.getDebtStarted());
         toCreate.setDescription(request.getDescription());
@@ -45,11 +46,7 @@ public class DebtsServiceImpl extends BaseCrudServiceImpl<DebtsModel, DebtsRepos
         );
         var amount = ResolveValueFactory.of(request.getAmount(), other.getAmount());
         var amountPaid = ResolveValueFactory.of(request.getAmountPaid(), other.getAmountPaid());
-        if (amountPaid != null && amountPaid > 0) {
-            toUpdate.setAmountOwed(amount - amountPaid);
-        } else {
-            toUpdate.setAmountOwed(amount);
-        }
+        toUpdate.setAmountOwed(DebtsModel.owed(amount, amountPaid));
         toUpdate.setCreatedAt(other.getCreatedAt());
         toUpdate.setFrom(ResolveValueFactory.of(request.getFrom(), other.getFrom()));
         toUpdate.setDescription(ResolveValueFactory.of(request.getDescription(), other.getDescription()));

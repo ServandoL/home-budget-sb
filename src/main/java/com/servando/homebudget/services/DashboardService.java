@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -138,8 +139,9 @@ public class DashboardService {
      */
     private Double getSpendableMonthly(Double monthlyIncome, Double totalObligations, Double buffer, PayFrequency frequency) {
         if (buffer != null && buffer > 0) {
-            var freq = getFrequency(frequency) / MONTHS_PER_YEAR;
-            return (monthlyIncome - totalObligations) - (buffer / freq);
+            // The buffer is held back from every paycheck, so a month holds paychecks-per-month of them.
+            var paychecksPerMonth = getFrequency(frequency) / MONTHS_PER_YEAR;
+            return (monthlyIncome - totalObligations) - (buffer * paychecksPerMonth);
         }
         return monthlyIncome - totalObligations;
     }
@@ -265,6 +267,8 @@ public class DashboardService {
      * @return monthly-normalized cost
      */
     private Double getCycleBillingCost(MonthlyBillCost cost) {
+        // A credit card's minimum payment is optional; without one it adds nothing.
+        if (cost.amount() == null) return 0.0;
         var cycle = getMonthlyBillingCycle(cost.billingCycle());
         return cost.amount() / cycle;
     }
@@ -276,7 +280,7 @@ public class DashboardService {
      * @return total amount owed
      */
     private Double getTotalDebt(List<DebtsModel> debts) {
-        return debts.stream().mapToDouble(DebtsModel::getAmountOwed).sum();
+        return debts.stream().map(DebtsModel::getAmountOwed).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum();
     }
 
 }
