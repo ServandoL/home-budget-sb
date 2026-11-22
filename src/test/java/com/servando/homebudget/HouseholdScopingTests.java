@@ -200,6 +200,47 @@ class HouseholdScopingTests {
     }
 
     @Test
+    void anIncomeHasToPaySomething() throws Exception {
+        mvc.perform(json(post("/api/v1/incomes"),
+                        "{\"name\":\"Side gig\",\"netAmount\":0,\"frequency\":\"weekly\",\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        mvc.perform(json(post("/api/v1/incomes"),
+                        "{\"name\":\"Refund\",\"netAmount\":-200,\"frequency\":\"monthly\",\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        String pay = JsonPath.read(mvc.perform(json(post("/api/v1/incomes"),
+                        "{\"name\":\"Paycheck\",\"netAmount\":2450,\"frequency\":\"biweekly\",\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome))).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString(), "$.data.id");
+
+        mvc.perform(json(put("/api/v1/incomes/" + pay), "{\"name\":\"Paycheck\",\"netAmount\":0}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void onlyHouseRepairsAndDebtsCanBeOptional() throws Exception {
+        // The app only offers monthly, semiannual and annual for these; an optional cost isn't a bill.
+        mvc.perform(json(post("/api/v1/bills"),
+                        "{\"name\":\"Gym\",\"amount\":40,\"category\":\"other\",\"billingCycle\":\"optional\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        mvc.perform(json(post("/api/v1/subscriptions"),
+                        "{\"name\":\"Hulu\",\"amount\":17.99,\"priorityLevel\":\"optional\",\"billingCycle\":\"optional\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        mvc.perform(json(post("/api/v1/credit-cards"),
+                        "{\"name\":\"Visa\",\"currentBalance\":500,\"billingCycle\":\"optional\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+
+        // An optional subscription is a priority, which says nothing about the amount.
+        String hulu = JsonPath.read(mvc.perform(json(post("/api/v1/subscriptions"),
+                        "{\"name\":\"Hulu\",\"amount\":17.99,\"priorityLevel\":\"optional\",\"billingCycle\":\"monthly\"}")
+                .with(as(SAM, samHome))).andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString(), "$.data.id");
+        mvc.perform(json(put("/api/v1/subscriptions/" + hulu), "{\"name\":\"Hulu\",\"billingCycle\":\"optional\"}")
+                .with(as(SAM, samHome))).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/dashboard").with(as(SAM, samHome)))
+                .andExpect(jsonPath("$.subscriptionsMonthly").value(17.99));
+    }
+
+    @Test
     void aNewDebtCountsTowardTheDashboardStraightAway() throws Exception {
         mvc.perform(json(post("/api/v1/debts"), "{\"name\":\"Car\",\"billingCycle\":\"monthly\",\"amount\":1000,"
                         + "\"amountPaid\":250,\"from\":\"Bank\",\"description\":\"Loan\",\"debtStarted\":\"2026-01-01\"}")
@@ -215,6 +256,8 @@ class HouseholdScopingTests {
         mvc.perform(get("/api/v1/dashboard").with(as(SAM, samHome)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalDebts").value(750.0))
+                .andExpect(jsonPath("$.creditCardBalances").value(500.0))
+                .andExpect(jsonPath("$.totalOwed").value(1250.0))
                 .andExpect(jsonPath("$.creditCardsMonthly").value(0.0));
     }
 

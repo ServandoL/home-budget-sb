@@ -143,10 +143,10 @@ class BudgetSettingsTests {
 
     @Test
     void theDashboardUsesTheSavedSettings() throws Exception {
-        // $2,600 every two weeks: 26 paydays a year, so a monthly amount is spread over 26/12 paydays.
+        // $2,600 every two weeks: most months bring two paydays, so each moves half the target.
         mvc.perform(json(post("/api/v1/incomes"), "{\"name\":\"Pay\",\"netAmount\":2600,\"frequency\":\"biweekly\",\"billingCycle\":\"monthly\"}")
                 .with(as(SAM, samHome))).andExpect(status().isCreated());
-        double perPayday = 1200 / (26.0 / 12);
+        double perPayday = 1200 / 2.0;
 
         dashboard(samHome, "").andExpect(jsonPath("$.targetMonthlyTransfer").isNumber());
         save(SAM, samHome, "{\"targetMonthlyTransfer\":1200,\"payPeriodBuffer\":150}");

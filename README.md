@@ -26,7 +26,9 @@ A consistent layered design across every resource:
   and a `GlobalErrorHandler`
 
 A `DashboardService` aggregates the resources into a single dashboard DTO
-(covered by `DashboardServiceTest`).
+(covered by `DashboardServiceTest`). Each paycheck moves the same share of itself to the bills
+account, sized so the leanest month (two biweekly or four weekly paychecks) pays the larger of the
+target and the bills; months with an extra paycheck build up `extraTransferYearly` there.
 
 ## Households
 Every record belongs to a household from household-api (`household-api-sb`), shared with the other

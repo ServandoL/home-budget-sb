@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Getter
-public class UpdateSubscriptionsRequestDto extends SharedRequestProperties {
+public class UpdateSubscriptionsRequestDto extends SharedRequestProperties implements ScheduledBillingCycle {
     @Nullable
     Double amount;
     @Nullable

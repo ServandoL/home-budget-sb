@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class UpdateBillsRequestDto extends SharedRequestProperties {
+public class UpdateBillsRequestDto extends SharedRequestProperties implements ScheduledBillingCycle {
     @Nullable
     Double amount;
     @Nullable

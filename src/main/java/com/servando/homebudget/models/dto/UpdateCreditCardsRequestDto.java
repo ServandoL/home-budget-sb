@@ -4,7 +4,7 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 
 @Getter
-public class UpdateCreditCardsRequestDto extends SharedRequestProperties {
+public class UpdateCreditCardsRequestDto extends SharedRequestProperties implements ScheduledBillingCycle {
 
         @Nullable
         Double currentBalance;

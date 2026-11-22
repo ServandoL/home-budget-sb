@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class CreateCreditCardsRequestDto extends SharedRequestProperties {
+public class CreateCreditCardsRequestDto extends SharedRequestProperties implements ScheduledBillingCycle {
     @NotNull
     Double currentBalance;
     @Nullable

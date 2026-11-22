@@ -25,20 +25,37 @@ public class DashboardDto{
         private Double creditCardsMonthly;
         @NotNull
         private Double totalObligations;
-        /** The transfer per paycheck, spread evenly over every paycheck; {@link #transfers} has each income's. */
-        @NotNull
+        /**
+         * The transfer every paycheck makes, when they all make the same one (always so with one
+         * income). Null without income, or when paychecks differ: then {@link #transfers} has each one's.
+         */
+        @Nullable
         private Double recommendedTransfer;
-        /** What each income moves to the bills account each payday. */
+        /** What each income moves to the bills account each payday, and what that leaves of it. */
         @NotNull
         private List<IncomeTransfer> transfers;
-        @NotNull
+        /** What's left of every paycheck, when it's the same for all of them; null like {@link #recommendedTransfer}. */
+        @Nullable
         private Double spendablePerPaycheck;
+        /**
+         * Transfers are sized so the leanest month (two biweekly or four weekly paychecks) pays the
+         * bills. The months with an extra paycheck move this much more a year into the bills account.
+         */
+        @NotNull
+        private Double extraTransferYearly;
         @NotNull
         private Double spendableWeekly;
         @NotNull
         private Double spendableMonthly;
+        /** What's owed on debts, without credit cards. */
         @NotNull
         private Double totalDebts;
+        /** What's carried on credit cards. */
+        @NotNull
+        private Double creditCardBalances;
+        /** Debts and credit card balances together. */
+        @NotNull
+        private Double totalOwed;
         @NotNull
         private Integer billCounts;
         @NotNull
