@@ -38,7 +38,7 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toCreate.setCost(request.getCost());
         toCreate.setStatus(request.getStatus());
         toCreate.setNotes(request.getNotes());
-        toCreate.setDateComplete(request.getDateCompleted());
+        toCreate.setDateComplete(request.getDateComplete());
         toCreate.setCategory(request.getCategory());
         return this.create(householdId, request, toCreate);
     }
@@ -55,7 +55,7 @@ public class HouseRepairsServiceImpl extends BaseCrudServiceImpl<HouseRepairsMod
         toUpdate.setCost(ResolveValueFactory.of(request.getCost(), other.getCost()));
         toUpdate.setStatus(ResolveValueFactory.of(request.getStatus(), other.getStatus()));
         toUpdate.setNotes(ResolveValueFactory.of(request.getNotes(), other.getNotes()));
-        toUpdate.setDateComplete(ResolveValueFactory.of(request.getDateCompleted(), other.getDateComplete()));
+        toUpdate.setDateComplete(ResolveValueFactory.of(request.getDateComplete(), other.getDateComplete()));
         toUpdate.setCategory(ResolveValueFactory.of(request.getCategory(), other.getCategory()));
         toUpdate.setCreatedAt(other.getCreatedAt());
         return this.update(householdId, id, request, toUpdate);

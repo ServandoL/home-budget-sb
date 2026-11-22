@@ -280,6 +280,30 @@ class HouseholdScopingTests {
     }
 
     @Test
+    void aRepairKeepsItsCompletionDateAndCents() throws Exception {
+        String body = "{\"name\":\"r1\",\"description\":\"Replace faucet\",\"priority\":2,\"cost\":240.5,"
+                + "\"status\":\"complete\",\"dateComplete\":\"2026/11/20\",\"category\":\"KITCHEN\"}";
+        String id = JsonPath.read(mvc.perform(json(post("/api/v1/house-repairs"), body).with(as(SAM, samHome)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.dateComplete").value("2026/11/20"))
+                .andExpect(jsonPath("$.data.cost").value(240.5))
+                .andReturn().getResponse().getContentAsString(), "$.data.id");
+
+        // The old request name still works.
+        mvc.perform(json(put("/api/v1/house-repairs/" + id), "{\"name\":\"r1\",\"dateCompleted\":\"2026/11/21\"}")
+                        .with(as(SAM, samHome)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dateComplete").value("2026/11/21"));
+
+        // A record from before encryption, with a whole-dollar cost, reads back as dollars.
+        mongo.getCollection("HouseRepairs").updateOne(new Document("_id", new ObjectId(id)),
+                new Document("$set", new Document("cost", 240)));
+        caches.getCacheNames().forEach(name -> caches.getCache(name).clear());
+        mvc.perform(get("/api/v1/house-repairs").with(as(SAM, samHome)))
+                .andExpect(jsonPath("$.data[0].cost").value(240.0));
+    }
+
+    @Test
     void someoneOutsideTheHouseholdIsRefused() throws Exception {
         bills(KIM, samHome).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/bills").with(jwt().jwt(j -> j.claim("email", SAM)))).andExpect(status().is(428));

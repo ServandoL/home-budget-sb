@@ -26,9 +26,10 @@ public class HouseRepairsModel extends SharedProperties {
     Integer priority;
     @NotNull
     HouseRepairsStatus status;
+    /** In dollars and cents. Older records saved whole dollars, which read back the same. */
     @Encrypted
     @Nullable
-    Integer cost;
+    Double cost;
     @Encrypted
     @Nullable
     String notes;
