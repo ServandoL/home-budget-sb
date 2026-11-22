@@ -27,8 +27,10 @@ A consistent layered design across every resource:
 
 A `DashboardService` aggregates the resources into a single dashboard DTO
 (covered by `DashboardServiceTest`). Each paycheck moves the same share of itself to the bills
-account, sized so the leanest month (two biweekly or four weekly paychecks) pays the larger of the
-target and the bills; months with an extra paycheck build up `extraTransferYearly` there.
+account, so the paydays every month brings (two biweekly, four weekly) pay the larger of the target
+and the bills. An extra payday (a third biweekly or fifth weekly one) moves only the pay period
+buffer, the cushion that grows the account a little each payday. When two paychecks can't cover the
+bills, every payday moves the same amount and `shortMonthsCushion` is what the short months can draw.
 
 ## Households
 Every record belongs to a household from household-api (`household-api-sb`), shared with the other

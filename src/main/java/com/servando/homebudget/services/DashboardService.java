@@ -18,9 +18,14 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 /**
- * The household's budget in one place. Every amount is turned into a monthly figure, and each payday
- * moves a share of the paycheck to the bills account: enough that the leanest month, the one with the
- * fewest paydays, pays the bills. A month with an extra payday moves more, which builds up there.
+ * The household's budget in one place: what it needs each month to cover its expenses, what each
+ * payday moves to the bills account to meet that, and what's left to spend.
+ *
+ * <p>Every amount is turned into a monthly figure. Each payday moves the same share of its paycheck,
+ * enough that the paydays every month brings (two biweekly, four weekly) pay the month's bills. An
+ * extra payday (a third biweekly or fifth weekly one) moves only the buffer. Every payday moves the
+ * buffer, the cushion that grows the bills account a little over time. When two paychecks can't cover
+ * the bills, every payday moves the same amount and the short months draw on the bills account.
  */
 @Service
 public class DashboardService {
@@ -90,13 +95,23 @@ public class DashboardService {
         var transferShortfall = getTransferShortfall(totalObligations, effectiveTargetMonthlyTransfer);
         // The transfers move the target, or the bills when the target is less: they have to be paid.
         var toMoveMonthly = Math.max(effectiveTargetMonthlyTransfer, totalObligations);
-        var share = getShare(incomes, toMoveMonthly);
-        var transfers = getTransfers(incomes, share, buffer);
+        var shortMonth = incomes.stream()
+                .mapToDouble(e -> e.getNetAmount() * getShortMonthPaychecks(e.getFrequency())).sum();
+        // The paydays every month brings pay the bills, so an extra payday only moves the buffer.
+        // Otherwise the bills are spread over every payday in the year, the extra ones too.
+        var shortMonthsCover = shortMonth >= toMoveMonthly - HALF_A_CENT;
+        var share = shortMonthsCover
+                ? (shortMonth > 0 ? toMoveMonthly / shortMonth : 0.0)
+                : (totalIncome > 0 ? toMoveMonthly / totalIncome : 0.0);
+        var transfers = getTransfers(incomes, share, buffer, shortMonthsCover);
+        // Without income nothing is transferred to fall short; over budget says the bills aren't covered.
+        var shortMonthShortfall = shortMonthsCover || incomes.isEmpty() ? 0.0 : toMoveMonthly - shortMonth * share;
 
         // Without income there's no paycheck to transfer from, and the bills come out of what's there.
-        var movedMonthly = incomes.isEmpty() ? totalObligations : totalIncome * share + buffer * getPaychecksPerMonth(incomes);
+        var movedMonthly = incomes.isEmpty() ? totalObligations : transfers.stream()
+                .mapToDouble(t -> t.perPaycheck() * regularPaydays(t) + t.extraPaydayTransfer() * t.extraPaydaysYearly())
+                .sum() / MONTHS_PER_YEAR;
         var spendableMonthly = totalIncome - movedMonthly;
-        var extraTransferYearly = incomes.isEmpty() ? 0.0 : (totalIncome * share - toMoveMonthly) * MONTHS_PER_YEAR;
 
         dashboard.setMonthlyIncome(totalIncome);
         dashboard.setTargetMonthlyTransfer(effectiveTargetMonthlyTransfer);
@@ -109,7 +124,9 @@ public class DashboardService {
         dashboard.setTransfers(transfers);
         dashboard.setRecommendedTransfer(theOneValue(transfers, IncomeTransfer::perPaycheck));
         dashboard.setSpendablePerPaycheck(theOneValue(transfers, IncomeTransfer::spendablePerPaycheck));
-        dashboard.setExtraTransferYearly(Math.abs(extraTransferYearly) < HALF_A_CENT ? 0.0 : extraTransferYearly);
+        dashboard.setShortMonthShortfall(shortMonthShortfall);
+        dashboard.setShortMonthsCushion(shortMonthShortfall * incomes.stream()
+                .mapToInt(e -> getLongestRunOfShortMonths(e.getFrequency())).max().orElse(0));
         dashboard.setSpendableMonthly(spendableMonthly);
         dashboard.setSpendableWeekly(spendableMonthly * MONTHS_PER_YEAR / WEEKS_PER_YEAR);
         dashboard.setIsOverBudget(spendableMonthly < -HALF_A_CENT);
@@ -135,28 +152,27 @@ public class DashboardService {
     }
 
     /**
-     * The share of every paycheck that goes to the bills account: what has to move each month over
-     * what the leanest month brings in. Two biweekly paychecks come in ten months of the year, and four
-     * weekly ones in eight, so sizing for those months pays the bills every month.
-     */
-    private double getShare(List<IncomesModel> incomes, double toMoveMonthly) {
-        var leanMonth = incomes.stream()
-                .mapToDouble(e -> e.getNetAmount() * getLeanMonthPaychecks(e.getFrequency())).sum();
-        return leanMonth > 0 ? toMoveMonthly / leanMonth : 0.0;
-    }
-
-    /**
      * The transfer for each income: the same share of every paycheck, so incomes on different schedules
      * or of different sizes each pay their part, plus the buffer. And what that leaves of the paycheck.
+     * On an extra payday it's just the buffer when the other paydays already pay the bills.
      */
-    private List<IncomeTransfer> getTransfers(List<IncomesModel> incomes, double share, double buffer) {
+    private List<IncomeTransfer> getTransfers(List<IncomesModel> incomes, double share, double buffer,
+                                              boolean shortMonthsCover) {
         return incomes.stream()
                 .map(income -> {
                     var transfer = income.getNetAmount() * share + buffer;
+                    var extraPaydays = (int) Math.round(getPaychecksPerYear(income.getFrequency())
+                            - getShortMonthPaychecks(income.getFrequency()) * MONTHS_PER_YEAR);
                     return new IncomeTransfer(income.getId(), income.getName(), income.getFrequency(),
-                            transfer, income.getNetAmount() - transfer);
+                            transfer, income.getNetAmount() - transfer, extraPaydays,
+                            shortMonthsCover ? buffer : transfer);
                 })
                 .toList();
+    }
+
+    /** The paydays a year that every month brings: 24 for biweekly, 48 for weekly. */
+    private static double regularPaydays(IncomeTransfer t) {
+        return getPaychecksPerYear(t.frequency()) - t.extraPaydaysYearly();
     }
 
     /** The value every paycheck has in common, or null when there's no paycheck or they differ. */
@@ -172,11 +188,6 @@ public class DashboardService {
                 / MONTHS_PER_YEAR;
     }
 
-    /** Every paycheck in the household in an average month; each one moves the buffer. */
-    private double getPaychecksPerMonth(List<IncomesModel> incomes) {
-        return incomes.stream().mapToDouble(e -> getPaychecksPerYear(e.getFrequency())).sum() / MONTHS_PER_YEAR;
-    }
-
     /** Every value named, no default: a new frequency must be counted here. */
     private static double getPaychecksPerYear(PayFrequency freq) {
         return switch (freq) {
@@ -187,8 +198,20 @@ public class DashboardService {
         };
     }
 
+    /**
+     * The most months in a row that bring only the fewest paychecks, worked out over every start date.
+     * With several schedules the longest one counts, which overstates the cushion rather than under.
+     */
+    private static int getLongestRunOfShortMonths(PayFrequency freq) {
+        return switch (freq) {
+            case WEEKLY -> 3;
+            case BI_WEEKLY -> 6;
+            case SEMI_MONTHLY, MONTHLY -> 0;
+        };
+    }
+
     /** The fewest paychecks a calendar month can bring. */
-    private static double getLeanMonthPaychecks(PayFrequency freq) {
+    private static double getShortMonthPaychecks(PayFrequency freq) {
         return switch (freq) {
             case WEEKLY -> 4.0;
             case BI_WEEKLY, SEMI_MONTHLY -> 2.0;

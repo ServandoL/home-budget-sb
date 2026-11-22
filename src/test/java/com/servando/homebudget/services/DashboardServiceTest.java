@@ -72,12 +72,17 @@ public class DashboardServiceTest {
         assertEquals(1397.03, result.getRecommendedTransfer(), CENT);
         // What two paychecks move, less their buffers, pays the month's bills in full.
         assertEquals(result.getTotalObligations(), 2 * (transfer.perPaycheck() - 100), 1e-9);
-        // The two three-paycheck months move a third transfer each: one extra month of bills a year.
-        assertEquals(RENTER_OBLIGATIONS, result.getExtraTransferYearly(), 1e-6);
-        // What's left of each $2,450 paycheck, and on average a month and a week.
+        // Two months a year bring a third payday. The bills are already paid, so it moves just the buffer.
+        assertEquals(2, transfer.extraPaydaysYearly());
+        assertEquals(100.0, transfer.extraPaydayTransfer(), 1e-9);
+        assertEquals(0.0, result.getShortMonthShortfall(), 1e-9);
+        assertEquals(0.0, result.getShortMonthsCushion(), 1e-9);
+        // What's left of each $2,450 paycheck. On average a month: the income less the bills and
+        // the $100 buffer from each of 26 paydays, so the bills account grows only by the buffers.
         assertEquals(1052.97, transfer.spendablePerPaycheck(), CENT);
         assertEquals(transfer.spendablePerPaycheck(), result.getSpendablePerPaycheck(), 1e-9);
-        assertEquals(1052.97 * 26 / 12, result.getSpendableMonthly(), 0.01);
+        assertEquals(RENTER_PAY * 26 / 12 - RENTER_OBLIGATIONS - 100.0 * 26 / 12, result.getSpendableMonthly(), 1e-9);
+        assertEquals(2497.60, result.getSpendableMonthly(), CENT);
         assertEquals(result.getSpendableMonthly() * 12 / 52, result.getSpendableWeekly(), 1e-9);
         assertFalse(result.getIsOverBudget());
         assertMovedAndLeftOverAreTheIncome(result);
@@ -94,9 +99,10 @@ public class DashboardServiceTest {
 
         assertEquals(350.0, result.getRecommendedTransfer(), 1e-9);
         assertEquals(1400.0, 4 * result.getTransfers().get(0).perPaycheck(), 1e-9);
-        // 52 transfers of 350 is 18,200 against 16,800 of rent: 1,400 more a year.
-        assertEquals(1400.0, result.getExtraTransferYearly(), 1e-9);
-        assertEquals((850.0 - 350.0) * 52 / 12, result.getSpendableMonthly(), 1e-9);
+        // The fifth Fridays move nothing: 48 transfers of 350 is the year's 16,800 of rent exactly.
+        assertEquals(4, result.getTransfers().get(0).extraPaydaysYearly());
+        assertEquals(0.0, result.getTransfers().get(0).extraPaydayTransfer(), 1e-9);
+        assertEquals(850.0 * 52 / 12 - 1400, result.getSpendableMonthly(), 1e-9);
         assertMovedAndLeftOverAreTheIncome(result);
     }
 
@@ -113,7 +119,7 @@ public class DashboardServiceTest {
         assertEquals(2100.0, result.getRecommendedTransfer(), 1e-9);
         assertEquals(1900.0, result.getSpendableMonthly(), 1e-9);
         assertEquals(1900.0, result.getSpendablePerPaycheck(), 1e-9);
-        assertEquals(0.0, result.getExtraTransferYearly(), 1e-9);
+        assertEquals(0, result.getTransfers().get(0).extraPaydaysYearly());
         assertEquals(PayFrequency.MONTHLY, result.getFrequency());
     }
 
@@ -149,6 +155,10 @@ public class DashboardServiceTest {
         assertEquals(1920.29, salaryTransfer.spendablePerPaycheck(), CENT);
         assertNull(result.getRecommendedTransfer());
         assertNull(result.getSpendablePerPaycheck());
+        // Only the biweekly income has extra paydays; the monthly one never does.
+        assertEquals(2, wagesTransfer.extraPaydaysYearly());
+        assertEquals(0, salaryTransfer.extraPaydaysYearly());
+        assertEquals(7333.33 - 2285.99 - 100.0 * 38 / 12, result.getSpendableMonthly(), 0.01);
         assertEquals(PayFrequency.BI_WEEKLY, result.getFrequency());
         assertMovedAndLeftOverAreTheIncome(result);
     }
@@ -165,8 +175,8 @@ public class DashboardServiceTest {
         assertEquals(1100.0, result.getTransfers().get(1).perPaycheck(), 1e-9);
         assertEquals(1100.0, result.getRecommendedTransfer(), 1e-9);
         assertEquals(900.0, result.getSpendablePerPaycheck(), 1e-9);
-        // 52 paychecks a year between them, each keeping $900.
-        assertEquals(900.0 * 52 / 12, result.getSpendableMonthly(), 1e-9);
+        // 8,666.67 a month in, the 4,000 of rent, and the buffer from all 52 paydays a year.
+        assertEquals(2 * 2000.0 * 26 / 12 - 4000 - 100.0 * 52 / 12, result.getSpendableMonthly(), 1e-9);
         assertMovedAndLeftOverAreTheIncome(result);
     }
 
@@ -192,10 +202,34 @@ public class DashboardServiceTest {
         var result = dashboardService.getDashboard(HOUSEHOLD, 3000.0, 100.0);
 
         assertEquals(1600.0, result.getRecommendedTransfer(), 1e-9);
-        // 26 × 1,500 is 39,000 against a 36,000 target.
-        assertEquals(3000.0, result.getExtraTransferYearly(), 1e-9);
-        assertEquals((RENTER_PAY - 1600) * 26 / 12, result.getSpendableMonthly(), 1e-9);
+        // Exactly the 3,000 target each month, and the buffer from every payday.
+        assertEquals(RENTER_PAY * 26 / 12 - 3000 - 100.0 * 26 / 12, result.getSpendableMonthly(), 1e-9);
         assertTrue(result.getTransferCoversObligations());
+        assertMovedAndLeftOverAreTheIncome(result);
+    }
+
+    @Test
+    void getDashboard_spreadsTheBillsOverEveryPaydayWhenTwoPaychecksCantCoverThem() {
+        // $1,000 every two weeks against $2,100 of bills. Two paychecks bring 2,000, less than the
+        // bills, but 26 a year bring 2,166.67 a month on average: the third paydays are needed.
+        given(List.of(income("Paycheck", PayFrequency.BI_WEEKLY, 1000.0)),
+                List.of(bill("Rent", 1800.0, BillingCycle.MONTHLY), bill("Electric", 300.0, BillingCycle.MONTHLY)),
+                List.of(), List.of(), List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, null, 0.0);
+
+        // 2,100 × 12 ÷ 26 on every payday, the third ones too.
+        var transfer = result.getTransfers().get(0);
+        assertEquals(2100.0 * 12 / 26, transfer.perPaycheck(), 1e-9);
+        assertEquals(969.23, transfer.perPaycheck(), CENT);
+        assertEquals(transfer.perPaycheck(), transfer.extraPaydayTransfer(), 1e-9);
+        // A two-payday month moves 1,938.46 and draws the other 161.54 from the bills account; the
+        // two third paydays put it back.
+        assertEquals(161.54, result.getShortMonthShortfall(), CENT);
+        // Biweekly pay can bring six two-payday months in a row, so the account needs 6 × 161.54 on hand.
+        assertEquals(969.23, result.getShortMonthsCushion(), CENT);
+        assertEquals(2166.67 - 2100, result.getSpendableMonthly(), 0.01);
+        assertFalse(result.getIsOverBudget());
         assertMovedAndLeftOverAreTheIncome(result);
     }
 
@@ -211,7 +245,7 @@ public class DashboardServiceTest {
         assertNull(result.getSpendablePerPaycheck());
         assertNull(result.getRecommendedTransfer());
         assertTrue(result.getTransfers().isEmpty());
-        assertEquals(0.0, result.getExtraTransferYearly(), 1e-9);
+        assertEquals(0.0, result.getShortMonthShortfall(), 1e-9);
         assertTrue(result.getIsOverBudget());
     }
 
@@ -377,14 +411,21 @@ public class DashboardServiceTest {
         return new CreditCardsModel(name, cycle, 24.99, balance, 1, minimum);
     }
 
-    /** Everything moved to the bills account in a month, plus what's left over, is the income. */
+    /**
+     * Everything moved to the bills account in a year (regular paydays and extra ones), plus what's
+     * left over, is the income.
+     */
     private static void assertMovedAndLeftOverAreTheIncome(DashboardDto result) {
-        double moved = result.getTransfers().stream()
-                .mapToDouble(t -> t.perPaycheck() * paychecksPerYear(t.frequency()) / 12).sum();
-        assertEquals(result.getMonthlyIncome(), moved + result.getSpendableMonthly(), 1e-6);
-        double kept = result.getTransfers().stream()
-                .mapToDouble(t -> t.spendablePerPaycheck() * paychecksPerYear(t.frequency()) / 12).sum();
-        assertEquals(result.getSpendableMonthly(), kept, 1e-6);
+        double moved = 0;
+        double kept = 0;
+        for (var t : result.getTransfers()) {
+            var regular = paychecksPerYear(t.frequency()) - t.extraPaydaysYearly();
+            var net = t.perPaycheck() + t.spendablePerPaycheck();
+            moved += t.perPaycheck() * regular + t.extraPaydayTransfer() * t.extraPaydaysYearly();
+            kept += t.spendablePerPaycheck() * regular + (net - t.extraPaydayTransfer()) * t.extraPaydaysYearly();
+        }
+        assertEquals(result.getMonthlyIncome(), (moved + kept) / 12, 1e-6);
+        assertEquals(result.getSpendableMonthly(), kept / 12, 1e-6);
     }
 
     private static double paychecksPerYear(PayFrequency frequency) {

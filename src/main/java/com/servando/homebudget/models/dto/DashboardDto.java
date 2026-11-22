@@ -38,11 +38,19 @@ public class DashboardDto{
         @Nullable
         private Double spendablePerPaycheck;
         /**
-         * Transfers are sized so the leanest month (two biweekly or four weekly paychecks) pays the
-         * bills. The months with an extra paycheck move this much more a year into the bills account.
+         * How much a month with the fewest paydays draws from the bills account. 0 when two biweekly
+         * (or four weekly) paychecks cover the bills; otherwise every payday moves the same amount and
+         * the extra paydays make it up.
          */
         @NotNull
-        private Double extraTransferYearly;
+        private Double shortMonthShortfall;
+        /**
+         * The most the short months can draw from the bills account before an extra payday makes it
+         * up: {@link #shortMonthShortfall} over the longest run of them (six for biweekly, three for
+         * weekly). The cushion to keep there; 0 when the paydays cover the bills.
+         */
+        @NotNull
+        private Double shortMonthsCushion;
         @NotNull
         private Double spendableWeekly;
         @NotNull
