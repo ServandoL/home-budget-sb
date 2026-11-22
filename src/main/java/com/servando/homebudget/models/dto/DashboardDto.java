@@ -43,6 +43,12 @@ public class DashboardDto{
         private PayFrequency frequency;
         @NotNull
         private Boolean isOverBudget;
+        /** False when the target transfer is less than the monthly obligations. */
+        @NotNull
+        private Boolean transferCoversObligations;
+        /** How much a month the target transfer falls short of the obligations; 0 when it covers them. */
+        @NotNull
+        private Double transferShortfall;
 
 
 }

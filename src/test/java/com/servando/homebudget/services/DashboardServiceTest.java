@@ -56,10 +56,17 @@ public class DashboardServiceTest {
         assertEquals(4930.11, result.getTotalObligations(), 1e-6);
         // 5000 a month over 26/12 paychecks a month, plus the $100 buffer on each.
         assertEquals(2407.692307692308, result.getRecommendedTransfer(), 1e-6);
-        // The $100 buffer comes out of each of 26/12 paychecks a month: 216.67 a month.
-        assertEquals(7949.955 - 4930.11 - 100.0 * 26 / 12, result.getSpendableMonthly(), 1e-6);
-        assertEquals(2803.178333333333 * 12 / 26, result.getSpendablePerPaycheck(), 1e-6);
-        assertEquals(2803.178333333333 * 12 / 52, result.getSpendableWeekly(), 1e-6);
+        // What's left after the transfer: the 5000 target (more than the 4930.11 of obligations), and
+        // the $100 buffer from each of 26/12 paychecks a month, 216.67 a month.
+        var leftOver = 7949.955 - 5000.0 - 100.0 * 26 / 12;
+        assertEquals(leftOver, result.getSpendableMonthly(), 1e-6);
+        assertEquals(leftOver * 12 / 26, result.getSpendablePerPaycheck(), 1e-6);
+        assertEquals(leftOver * 12 / 52, result.getSpendableWeekly(), 1e-6);
+        // The transfer, monthly, plus what's left over is all the income.
+        assertEquals(result.getMonthlyIncome(),
+                result.getRecommendedTransfer() * 26 / 12 + result.getSpendableMonthly(), 1e-6);
+        assertTrue(result.getTransferCoversObligations());
+        assertEquals(0.0, result.getTransferShortfall(), 1e-9);
     }
 
     @Test
@@ -145,8 +152,11 @@ public class DashboardServiceTest {
         assertEquals(PayFrequency.SEMI_MONTHLY, result.getFrequency());
         assertFalse(result.getIsOverBudget());
         assertEquals(200.0, result.getRecommendedTransfer(), 1e-9);
-        // 2000 a month in, 220 out, and the $200 buffer from each of 2 paychecks a month.
+        // 2000 a month in, 220 out, and the $200 buffer from each of 2 paychecks a month. A $0 target
+        // doesn't make the 220 of bills spendable.
         assertEquals(1380.0, result.getSpendableMonthly(), 1e-9);
+        assertFalse(result.getTransferCoversObligations());
+        assertEquals(220.0, result.getTransferShortfall(), 1e-9);
     }
 
     @Test
@@ -168,5 +178,8 @@ public class DashboardServiceTest {
 
         assertEquals(25.0, result.getCreditCardsMonthly(), 1e-9);
         assertEquals(750.0, result.getTotalDebts(), 1e-9);
+        // No target: the transfer is the obligations, so it covers them.
+        assertTrue(result.getTransferCoversObligations());
+        assertEquals(0.0, result.getTransferShortfall(), 1e-9);
     }
 }

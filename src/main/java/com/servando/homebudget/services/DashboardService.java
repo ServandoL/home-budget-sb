@@ -37,8 +37,8 @@ public class DashboardService {
      * monthly, weekly, and per-paycheck budget values from them.
      *
      * @param householdId the household whose records to total
-     * @param targetMonthlyTransfer the amount the user wants to transfer into savings or another goal each month;
-     *                              when null, a safe amount is auto-calculated from surplus income
+     * @param targetMonthlyTransfer the amount the household moves into its bills account each month;
+     *                              when null, it's the monthly obligations
      * @param payPeriodBuffer additional buffer amount to reserve from each pay period
      * @return a populated dashboard summary
      */
@@ -80,11 +80,20 @@ public class DashboardService {
                 ? targetMonthlyTransfer
                 : getAutoTargetMonthlyTransfer(totalObligations);
         var recommendedTransferPerPayPeriod = getRecommendedTransferPerPayPeriod(incomes, effectiveTargetMonthlyTransfer, payPeriodBuffer);
-        var spendableMonthly = getSpendableMonthly(totalIncome, totalObligations, payPeriodBuffer, incomeFrequency);
+        // What leaves the main account each month is the transfer, which is the target when it's
+        // larger than the obligations; a smaller target doesn't free money, the bills still need paying.
+        // Without income there's no paycheck to transfer from, only the bills.
+        var committedMonthly = incomes.isEmpty()
+                ? totalObligations
+                : Math.max(effectiveTargetMonthlyTransfer, totalObligations);
+        var transferShortfall = Math.max(0.0, totalObligations - effectiveTargetMonthlyTransfer);
+        var spendableMonthly = getSpendableMonthly(totalIncome, committedMonthly, payPeriodBuffer, incomeFrequency);
         var spendablePerPaycheck = getSpendablePerPaycheckFromMonthly(spendableMonthly, incomes);
         var spendableWeekly = getSpendableWeeklyFromMonthly(spendableMonthly);
         dashboard.setMonthlyIncome(totalIncome);
         dashboard.setTargetMonthlyTransfer(effectiveTargetMonthlyTransfer);
+        dashboard.setTransferShortfall(transferShortfall);
+        dashboard.setTransferCoversObligations(transferShortfall == 0.0);
         dashboard.setBillsMonthly(billsMonthly);
         dashboard.setSubscriptionsMonthly(subscriptionsMonthly);
         dashboard.setCreditCardsMonthly(ccMonthly);
@@ -129,21 +138,22 @@ public class DashboardService {
     }
 
     /**
-     * Calculates how much money remains available each month after obligations and any configured buffer.
+     * Calculates how much money remains in the main account each month after the transfer to the
+     * bills account and any configured buffer.
      *
      * @param monthlyIncome total monthly income
-     * @param totalObligations monthly obligations
+     * @param committedMonthly what's moved out each month: the larger of the target transfer and the obligations
      * @param buffer optional pay-period buffer to subtract from the monthly spendable amount
      * @param frequency pay frequency used to normalize the buffer
      * @return spendable monthly amount
      */
-    private Double getSpendableMonthly(Double monthlyIncome, Double totalObligations, Double buffer, PayFrequency frequency) {
+    private Double getSpendableMonthly(Double monthlyIncome, Double committedMonthly, Double buffer, PayFrequency frequency) {
         if (buffer != null && buffer > 0) {
             // The buffer is held back from every paycheck, so a month holds paychecks-per-month of them.
             var paychecksPerMonth = getFrequency(frequency) / MONTHS_PER_YEAR;
-            return (monthlyIncome - totalObligations) - (buffer * paychecksPerMonth);
+            return (monthlyIncome - committedMonthly) - (buffer * paychecksPerMonth);
         }
-        return monthlyIncome - totalObligations;
+        return monthlyIncome - committedMonthly;
     }
 
     /**
