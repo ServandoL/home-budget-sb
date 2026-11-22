@@ -2,6 +2,7 @@ package com.servando.homebudget.services;
 
 import com.servando.homebudget.models.database.*;
 import com.servando.homebudget.models.dto.DashboardDto;
+import com.servando.homebudget.models.dto.IncomeTransfer;
 import com.servando.homebudget.models.dto.MonthlyBillCost;
 import com.servando.homebudget.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +80,7 @@ public class DashboardService {
         var effectiveTargetMonthlyTransfer = targetMonthlyTransfer != null
                 ? targetMonthlyTransfer
                 : getAutoTargetMonthlyTransfer(totalObligations);
+        var transfers = getTransfers(incomes, totalIncome, effectiveTargetMonthlyTransfer, payPeriodBuffer);
         var recommendedTransferPerPayPeriod = getRecommendedTransferPerPayPeriod(incomes, effectiveTargetMonthlyTransfer, payPeriodBuffer);
         // What leaves the main account each month is the transfer, which is the target when it's
         // larger than the obligations; a smaller target doesn't free money, the bills still need paying.
@@ -87,7 +89,7 @@ public class DashboardService {
                 ? totalObligations
                 : Math.max(effectiveTargetMonthlyTransfer, totalObligations);
         var transferShortfall = Math.max(0.0, totalObligations - effectiveTargetMonthlyTransfer);
-        var spendableMonthly = getSpendableMonthly(totalIncome, committedMonthly, payPeriodBuffer, incomeFrequency);
+        var spendableMonthly = getSpendableMonthly(totalIncome, committedMonthly, payPeriodBuffer, incomes);
         var spendablePerPaycheck = getSpendablePerPaycheckFromMonthly(spendableMonthly, incomes);
         var spendableWeekly = getSpendableWeeklyFromMonthly(spendableMonthly);
         dashboard.setMonthlyIncome(totalIncome);
@@ -99,6 +101,7 @@ public class DashboardService {
         dashboard.setCreditCardsMonthly(ccMonthly);
         dashboard.setTotalObligations(totalObligations);
         dashboard.setRecommendedTransfer(recommendedTransferPerPayPeriod);
+        dashboard.setTransfers(transfers);
         dashboard.setSpendablePerPaycheck(spendablePerPaycheck);
         dashboard.setSpendableMonthly(spendableMonthly);
         dashboard.setSpendableWeekly(spendableWeekly);
@@ -123,18 +126,39 @@ public class DashboardService {
     }
 
     /**
-     * Converts a monthly transfer target into a per-pay-period amount using the highest income frequency
-     * available in the dashboard.
+     * The transfer for each income. Every paycheck moves the same share of itself, the target over the
+     * household's monthly income, so incomes on different schedules or of different sizes each pay
+     * their part. Each paycheck also moves the buffer.
      *
-     * @param incomes income records used to determine pay frequency
+     * @param incomes income records
+     * @param monthlyIncome the household's total monthly income
+     * @param targetMonthlyTransfer what the household moves to the bills account each month
+     * @param buffer extra amount moved on every paycheck
+     * @return one transfer per income, in the order given
+     */
+    private List<IncomeTransfer> getTransfers(List<IncomesModel> incomes, Double monthlyIncome,
+                                              Double targetMonthlyTransfer, Double buffer) {
+        var share = monthlyIncome > 0 ? targetMonthlyTransfer / monthlyIncome : 0.0;
+        var perPaycheckBuffer = buffer == null ? 0.0 : buffer;
+        return incomes.stream()
+                .map(income -> new IncomeTransfer(income.getId(), income.getName(), income.getFrequency(),
+                        income.getNetAmount() * share + perPaycheckBuffer))
+                .toList();
+    }
+
+    /**
+     * The transfer per paycheck spread evenly over every paycheck in the household. With one income
+     * it's that income's transfer; with several, {@link #getTransfers} gives each one its own.
+     *
+     * @param incomes income records used to count paychecks
      * @param targetMonthlyTransfer desired monthly transfer target
      * @param buffer extra amount to add per pay period
-     * @return recommended transfer amount per pay period
+     * @return transfer per paycheck, on average
      */
     private Double getRecommendedTransferPerPayPeriod(List<IncomesModel> incomes, Double targetMonthlyTransfer, Double buffer) {
         if (incomes.isEmpty()) return (double) 0;
-        var frequency = getIncomesFrequency(incomes);
-        return (targetMonthlyTransfer / (getFrequency(frequency) / MONTHS_PER_YEAR)) + buffer;
+        var paychecksPerMonth = getTotalPayPeriodsPerYear(incomes) / MONTHS_PER_YEAR;
+        return (targetMonthlyTransfer / paychecksPerMonth) + (buffer == null ? 0.0 : buffer);
     }
 
     /**
@@ -144,13 +168,13 @@ public class DashboardService {
      * @param monthlyIncome total monthly income
      * @param committedMonthly what's moved out each month: the larger of the target transfer and the obligations
      * @param buffer optional pay-period buffer to subtract from the monthly spendable amount
-     * @param frequency pay frequency used to normalize the buffer
+     * @param incomes income records, whose paychecks each move the buffer
      * @return spendable monthly amount
      */
-    private Double getSpendableMonthly(Double monthlyIncome, Double committedMonthly, Double buffer, PayFrequency frequency) {
-        if (buffer != null && buffer > 0) {
-            // The buffer is held back from every paycheck, so a month holds paychecks-per-month of them.
-            var paychecksPerMonth = getFrequency(frequency) / MONTHS_PER_YEAR;
+    private Double getSpendableMonthly(Double monthlyIncome, Double committedMonthly, Double buffer, List<IncomesModel> incomes) {
+        if (buffer != null && buffer > 0 && !incomes.isEmpty()) {
+            // Every paycheck in the household moves the buffer, so a month holds that many of them.
+            var paychecksPerMonth = getTotalPayPeriodsPerYear(incomes) / MONTHS_PER_YEAR;
             return (monthlyIncome - committedMonthly) - (buffer * paychecksPerMonth);
         }
         return monthlyIncome - committedMonthly;

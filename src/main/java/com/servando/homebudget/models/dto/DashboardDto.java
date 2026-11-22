@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @NoArgsConstructor
 @Getter
 @Setter
@@ -23,8 +25,12 @@ public class DashboardDto{
         private Double creditCardsMonthly;
         @NotNull
         private Double totalObligations;
+        /** The transfer per paycheck, spread evenly over every paycheck; {@link #transfers} has each income's. */
         @NotNull
         private Double recommendedTransfer;
+        /** What each income moves to the bills account each payday. */
+        @NotNull
+        private List<IncomeTransfer> transfers;
         @NotNull
         private Double spendablePerPaycheck;
         @NotNull

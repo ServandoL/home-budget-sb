@@ -65,6 +65,9 @@ public class DashboardServiceTest {
         // The transfer, monthly, plus what's left over is all the income.
         assertEquals(result.getMonthlyIncome(),
                 result.getRecommendedTransfer() * 26 / 12 + result.getSpendableMonthly(), 1e-6);
+        // One income: its transfer is the recommended one.
+        assertEquals(result.getRecommendedTransfer(), result.getTransfers().get(0).perPaycheck(), 1e-9);
+        assertMovedAndLeftOverAreTheIncome(result);
         assertTrue(result.getTransferCoversObligations());
         assertEquals(0.0, result.getTransferShortfall(), 1e-9);
     }
@@ -181,5 +184,70 @@ public class DashboardServiceTest {
         // No target: the transfer is the obligations, so it covers them.
         assertTrue(result.getTransferCoversObligations());
         assertEquals(0.0, result.getTransferShortfall(), 1e-9);
+    }
+    @Test
+    void getDashboard_givesTwoIncomesOnOneScheduleEachHalfTheTransfer() {
+        var sam = new IncomesModel("Sam", BillingCycle.MONTHLY, PayFrequency.BI_WEEKLY, 2000.0);
+        var kim = new IncomesModel("Kim", BillingCycle.MONTHLY, PayFrequency.BI_WEEKLY, 2000.0);
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(sam, kim));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 4000.0, BillCategory.RENT, BillingCycle.MONTHLY, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, null, 100.0);
+
+        // 4000 of 8666.67 a month is 46%: each $2000 paycheck moves 923.08, plus the $100 buffer.
+        assertEquals(2, result.getTransfers().size());
+        assertEquals(sam.getId(), result.getTransfers().get(0).incomeId());
+        assertEquals("Kim", result.getTransfers().get(1).name());
+        var householdMonthly = 2 * 2000.0 * 26 / 12;
+        assertEquals(2000.0 * 4000 / householdMonthly + 100, result.getTransfers().get(0).perPaycheck(), 1e-6);
+        assertEquals(result.getTransfers().get(0).perPaycheck(), result.getTransfers().get(1).perPaycheck(), 1e-9);
+        // The buffer comes out of all 52 paychecks a year, not 26.
+        assertEquals(householdMonthly - 4000 - 100.0 * 52 / 12, result.getSpendableMonthly(), 1e-6);
+        assertMovedAndLeftOverAreTheIncome(result);
+    }
+
+    @Test
+    void getDashboard_givesIncomesOnDifferentSchedulesTheSameShare() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new IncomesModel("Weekly", BillingCycle.MONTHLY, PayFrequency.WEEKLY, 1000.0),
+                new IncomesModel("Monthly", BillingCycle.MONTHLY, PayFrequency.MONTHLY, 3000.0)
+        ));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 2000.0, BillCategory.RENT, BillingCycle.MONTHLY, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        // 2200 of 7333.33 a month is 30% of every paycheck.
+        var result = dashboardService.getDashboard(HOUSEHOLD, 2200.0, 50.0);
+
+        assertEquals(1000.0 * 52 / 12 + 3000, result.getMonthlyIncome(), 1e-6);
+        assertEquals(350.0, result.getTransfers().get(0).perPaycheck(), 1e-6);
+        assertEquals(PayFrequency.WEEKLY, result.getTransfers().get(0).frequency());
+        assertEquals(950.0, result.getTransfers().get(1).perPaycheck(), 1e-6);
+        assertEquals(result.getMonthlyIncome() - 2200 - 50.0 * (52 + 12) / 12, result.getSpendableMonthly(), 1e-6);
+        assertMovedAndLeftOverAreTheIncome(result);
+    }
+
+    /** Everything moved to the bills account in a month, plus what's left over, is the income. */
+    private static void assertMovedAndLeftOverAreTheIncome(com.servando.homebudget.models.dto.DashboardDto result) {
+        double moved = result.getTransfers().stream()
+                .mapToDouble(t -> t.perPaycheck() * paychecksPerYear(t.frequency()) / 12).sum();
+        assertEquals(result.getMonthlyIncome(), moved + result.getSpendableMonthly(), 1e-6);
+    }
+
+    private static double paychecksPerYear(PayFrequency frequency) {
+        return switch (frequency) {
+            case WEEKLY -> 52;
+            case BI_WEEKLY -> 26;
+            case SEMI_MONTHLY -> 24;
+            case MONTHLY -> 12;
+        };
     }
 }
