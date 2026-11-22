@@ -235,6 +235,69 @@ public class DashboardServiceTest {
         assertMovedAndLeftOverAreTheIncome(result);
     }
 
+    @Test
+    void getDashboard_takesATargetTypedToMatchTheObligationsAsCoveringThem() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new IncomesModel("Primary", BillingCycle.MONTHLY, PayFrequency.BI_WEEKLY, 3669.21)
+        ));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 4522.55, BillCategory.RENT, BillingCycle.MONTHLY, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new SubscriptionsModel("Music", BillingCycle.MONTHLY, 178.56, 1, PriorityLevel.IMPORTANT)
+        ));
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new CreditCardsModel("CC", BillingCycle.MONTHLY, 0.0, 229.00, 1, 229.00)
+        ));
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        // The three add up to 4930.110000000001, a hair over what was typed.
+        var result = dashboardService.getDashboard(HOUSEHOLD, 4930.11, 100.0);
+
+        assertTrue(result.getTotalObligations() > 4930.11);
+        assertTrue(result.getTransferCoversObligations());
+        assertEquals(0.0, result.getTransferShortfall());
+    }
+
+    @Test
+    void getDashboard_stillReportsAShortfallOfACent() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new IncomesModel("Primary", BillingCycle.MONTHLY, PayFrequency.BI_WEEKLY, 3000.0)
+        ));
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 1500.0, BillCategory.RENT, BillingCycle.MONTHLY, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, 1499.99, 0.0);
+
+        assertFalse(result.getTransferCoversObligations());
+        assertEquals(0.01, result.getTransferShortfall(), 1e-9);
+    }
+
+    @Test
+    void getDashboard_countsARecordWithoutABillingCycleAsMonthly() {
+        when(incomesRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+        when(billsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new BillsModel("Rent", 1500.0, BillCategory.RENT, null, 1)
+        ));
+        when(subscriptionsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new SubscriptionsModel("Music", null, 10.0, 1, PriorityLevel.IMPORTANT)
+        ));
+        when(creditCardsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of(
+                new CreditCardsModel("CC", null, 0.0, 500.0, 1, 25.0)
+        ));
+        when(debtsRepository.findAllByHouseholdId(HOUSEHOLD, Sort.unsorted())).thenReturn(List.of());
+
+        var result = dashboardService.getDashboard(HOUSEHOLD, null, 0.0);
+
+        assertEquals(1500.0, result.getBillsMonthly(), 1e-9);
+        assertEquals(10.0, result.getSubscriptionsMonthly(), 1e-9);
+        assertEquals(25.0, result.getCreditCardsMonthly(), 1e-9);
+    }
+
     /** Everything moved to the bills account in a month, plus what's left over, is the income. */
     private static void assertMovedAndLeftOverAreTheIncome(com.servando.homebudget.models.dto.DashboardDto result) {
         double moved = result.getTransfers().stream()

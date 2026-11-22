@@ -31,6 +31,7 @@ public class DashboardService {
     ExecutorService executor = Executors.newFixedThreadPool(5);
     private final Double MONTHS_PER_YEAR = 12.0;
     private final Double WEEKS_PER_YEAR = 52.0;
+    private static final double HALF_A_CENT = 0.005;
 
 
     /**
@@ -88,7 +89,7 @@ public class DashboardService {
         var committedMonthly = incomes.isEmpty()
                 ? totalObligations
                 : Math.max(effectiveTargetMonthlyTransfer, totalObligations);
-        var transferShortfall = Math.max(0.0, totalObligations - effectiveTargetMonthlyTransfer);
+        var transferShortfall = getTransferShortfall(totalObligations, effectiveTargetMonthlyTransfer);
         var spendableMonthly = getSpendableMonthly(totalIncome, committedMonthly, payPeriodBuffer, incomes);
         var spendablePerPaycheck = getSpendablePerPaycheckFromMonthly(spendableMonthly, incomes);
         var spendableWeekly = getSpendableWeeklyFromMonthly(spendableMonthly);
@@ -123,6 +124,20 @@ public class DashboardService {
      */
     private Double getAutoTargetMonthlyTransfer(Double totalObligations) {
         return totalObligations;
+    }
+
+    /**
+     * How much a month the target falls short of the obligations. The obligations are a sum of
+     * decimals (4522.55 + 178.56 + 229.00 is 4930.110000000001), so a target typed to match them
+     * counts as covering them: anything under half a cent is no shortfall.
+     *
+     * @param totalObligations total monthly obligations
+     * @param targetMonthlyTransfer what the household moves to the bills account each month
+     * @return the shortfall, or 0 when the target covers the obligations
+     */
+    private Double getTransferShortfall(Double totalObligations, Double targetMonthlyTransfer) {
+        var shortfall = totalObligations - targetMonthlyTransfer;
+        return shortfall < HALF_A_CENT ? 0.0 : shortfall;
     }
 
     /**
@@ -240,10 +255,11 @@ public class DashboardService {
     /**
      * Normalizes a billing cycle to the number of months it spans.
      *
-     * @param billingCycle billing cycle to convert
+     * @param billingCycle billing cycle to convert; none counts as monthly, as the UI shows it
      * @return month multiplier for the cycle
      */
     private Double getMonthlyBillingCycle(BillingCycle billingCycle) {
+        if (billingCycle == null) return 1.0;
         return switch (billingCycle) {
             case ANNUAL, OPTIONAL -> MONTHS_PER_YEAR;
             case SEMIANNUAL -> 6.0;
