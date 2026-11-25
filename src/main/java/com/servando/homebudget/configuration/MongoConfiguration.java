@@ -7,6 +7,7 @@ import com.servando.homebudget.models.database.BudgetSettingsModel;
 import com.servando.homebudget.models.database.BillsModel;
 import com.servando.homebudget.models.database.CreditCardsModel;
 import com.servando.homebudget.models.database.DebtsModel;
+import com.servando.homebudget.models.database.EventBudgetModel;
 import com.servando.homebudget.models.database.HouseRepairsModel;
 import com.servando.homebudget.models.database.IncomesModel;
 import com.servando.homebudget.models.database.SharedProperties;
@@ -51,8 +52,8 @@ public class MongoConfiguration {
 
     /** Every record type: the purge clears them all, and each gets the per-household name index. */
     public static final List<Class<? extends SharedProperties>> MODELS = List.of(BillsModel.class,
-            CreditCardsModel.class, DebtsModel.class, HouseRepairsModel.class, IncomesModel.class,
-            SubscriptionsModel.class);
+            CreditCardsModel.class, DebtsModel.class, EventBudgetModel.class, HouseRepairsModel.class,
+            IncomesModel.class, SubscriptionsModel.class);
 
     static final String OLD_NAME_INDEX = "householdId_name_unique";
     static final String NAME_INDEX = "householdId_nameIndex_unique";
